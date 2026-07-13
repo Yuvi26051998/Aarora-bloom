@@ -1,0 +1,3603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NUVOTION mix  — Audio-Reactive Visuals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     NUVOTION — Audio-Reactive Visual Performance Tool
+     Art Nouveau × Broadcast Aesthetic
+     ============================================================ */
+
+  :root {
+    --bg:        #0a0807;
+    --bg-2:     #100c0a;
+    --surface:   #16110e;
+    --surface-2: #1c1612;
+    --line:      #2a2018;
+    --line-2:    #3a2c22;
+    --cream:     #f4ebd9;
+    --cream-dim: #b9ad95;
+    --muted:     #6f6358;
+    --red:       #e60e00;
+    --red-dim:   #8a0700;
+    --gold:      #d4a93d;
+    --teal:      #4dd2c0;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+
+  /* ===== Background atmospheres ===== */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 800px 600px at 50% 0%, rgba(230,14,0,0.07), transparent 70%),
+      radial-gradient(ellipse 600px 600px at 0% 100%, rgba(212,169,61,0.04), transparent 70%),
+      radial-gradient(ellipse 600px 600px at 100% 100%, rgba(77,210,192,0.03), transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.5'/></svg>");
+    opacity: 0.035; pointer-events: none; z-index: 1; mix-blend-mode: overlay;
+  }
+
+  .app {
+    position: relative; z-index: 2;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: 64px 1fr 168px 26px;
+  }
+
+  /* ============================================================
+     TOP BAR — brand · tempo · audio · transport
+     ============================================================ */
+  .topbar {
+    display: grid;
+    grid-template-columns: 280px 1fr auto;
+    align-items: stretch;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #14100c, var(--bg));
+  }
+
+  .brand {
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 22px;
+    border-right: 1px solid var(--line);
+    position: relative;
+  }
+  .brand-mark {
+    width: 38px; height: 38px;
+    flex-shrink: 0;
+    color: var(--red);
+  }
+  .brand-text {
+    line-height: 1;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .brand-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--cream);
+  }
+  .brand-name .nu { color: var(--red); font-style: italic; }
+  .brand-tag {
+    font-size: 8.5px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* TRANSPORT center */
+  .transport {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 0 24px;
+    overflow: hidden;
+  }
+  .ctl {
+    display: flex; flex-direction: column; gap: 5px;
+    min-width: 0;
+  }
+  .ctl-label {
+    font-size: 8.5px;
+    letter-spacing: 2.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .ctl-row { display: flex; align-items: center; gap: 8px; }
+
+  .tempo-display {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1;
+    min-width: 70px;
+    color: var(--cream);
+    font-feature-settings: 'lnum';
+  }
+  .tempo-display.beat { color: var(--red); }
+
+  .icon-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--cream-dim);
+    padding: 6px 10px;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .icon-btn:hover { border-color: var(--red); color: var(--cream); }
+  .icon-btn.tap, .icon-btn:active, .icon-btn.on { background: var(--red); border-color: var(--red); color: #fff; }
+
+  .led {
+    width: 10px; height: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line-2);
+    border-radius: 50%;
+  }
+  .led.on { background: var(--red); box-shadow: 0 0 10px var(--red); }
+
+  /* Audio meters */
+  .meters {
+    display: flex; align-items: center; gap: 16px;
+    padding: 0 6px;
+  }
+  .meter-block {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    min-width: 38px;
+  }
+  .meter-label {
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--muted);
+  }
+  .meter-bar {
+    width: 4px; height: 36px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+  .meter-fill {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180px, var(--red), var(--gold) 70%, var(--teal));
+    transition: height 0.06s;
+  }
+
+  .audio-meters {
+    display: flex; align-items: center;
+    gap: 6px;
+    padding-left: 18px;
+    border-left: 1px solid var(--line);
+  }
+  .audio-meters .meter-block {
+    flex-direction: row;
+    gap: 6px;
+    min-width: auto;
+  }
+  .audio-meters .meter-bar {
+    width: 60px; height: 6px;
+  }
+  .audio-meters .meter-fill {
+    bottom: auto; top: 0; left: 0; height: 100% !important;
+    width: var(--lvl, 0%);
+    background: linear-gradient(90deg, var(--red), var(--gold) 70%, var(--teal));
+    transition: width 0.06s;
+  }
+  .audio-meters .meter-label {
+    min-width: 30px;
+    color: var(--cream-dim);
+  }
+
+  .topbar-right {
+    display: flex; align-items: center;
+    gap: 10px;
+    padding: 0 22px;
+    border-left: 1px solid var(--line);
+  }
+  .rec-btn {
+    background: transparent;
+    border: 1px solid var(--red-dim);
+    color: var(--red);
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .rec-btn:hover { background: rgba(230,14,0,0.1); }
+  .rec-btn.on { background: var(--red); color: #fff; }
+  .rec-btn .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red);
+    animation: pulse 1.4s infinite;
+  }
+  .rec-btn.on .dot { background: #fff; box-shadow: 0 0 12px #fff; }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  /* ============================================================
+     MAIN — Scene A · Mixer · Scene B
+     ============================================================ */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .scene-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-2);
+    overflow: hidden;
+  }
+  .scene-panel.A { border-right: 1px solid var(--line); }
+  .scene-panel.B { border-left: 1px solid var(--line); }
+
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(230,14,0,0.03), transparent);
+  }
+  .panel-head .scene-tag {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .scene-letter {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    line-height: 1;
+    font-weight: 600;
+    color: var(--red);
+    font-style: italic;
+  }
+  .scene-meta {
+    line-height: 1.2;
+  }
+  .scene-meta-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    color: var(--cream);
+  }
+  .scene-meta-sub {
+    font-size: 8.5px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .panel-head-buttons { display: flex; gap: 4px; }
+  .pbtn {
+    width: 22px; height: 22px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--cream-dim);
+    font-family: inherit;
+    font-size: 10px;
+    cursor: pointer;
+    display: grid; place-items: center;
+  }
+  .pbtn:hover { border-color: var(--red); color: var(--red); }
+
+  .scene-preview {
+    aspect-ratio: 16/9;
+    margin: 14px 16px 12px;
+    background: #000;
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px var(--bg), 0 4px 30px rgba(0,0,0,0.6);
+  }
+  .scene-preview canvas { width: 100%; height: 100%; display: block; }
+  .scene-preview .label {
+    position: absolute;
+    top: 6px; left: 8px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.6);
+    background: rgba(0,0,0,0.5);
+    padding: 2px 6px;
+  }
+  .scene-preview .nouveau-corner {
+    position: absolute;
+    width: 24px; height: 24px;
+    color: var(--red);
+    opacity: 0.6;
+  }
+  .scene-preview .nouveau-corner.tl { top: 4px; left: 4px; }
+  .scene-preview .nouveau-corner.tr { top: 4px; right: 4px; transform: scaleX(-1); }
+  .scene-preview .nouveau-corner.bl { bottom: 4px; left: 4px; transform: scaleY(-1); }
+  .scene-preview .nouveau-corner.br { bottom: 4px; right: 4px; transform: scale(-1, -1); }
+
+  /* Layers list */
+  .layers-section {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 16px 12px;
+  }
+  .layers-section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0 8px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    color: var(--cream);
+    letter-spacing: 1px;
+  }
+  .section-title em {
+    color: var(--red);
+    font-weight: 500;
+    font-size: 12px;
+    margin-left: 6px;
+    font-style: italic;
+  }
+  .add-layer {
+    background: transparent;
+    border: 1px dashed var(--line-2);
+    color: var(--cream-dim);
+    padding: 4px 10px;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+  .add-layer:hover { border-color: var(--red); color: var(--red); border-style: solid; }
+
+  .layer {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    margin-bottom: 6px;
+    padding: 8px 10px;
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 10px;
+    align-items: center;
+    cursor: pointer;
+    transition: border-color 0.1s;
+  }
+  .layer:hover { border-color: var(--line-2); }
+  .layer.active { border-color: var(--red); box-shadow: inset 2px 0 0 var(--red); }
+  .layer-thumb {
+    width: 32px; height: 22px;
+    background: #000;
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+  .layer-thumb canvas { width: 100%; height: 100%; display: block; }
+  .layer-info { min-width: 0; }
+  .layer-info-top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 8px;
+  }
+  .layer-name {
+    font-size: 11px;
+    color: var(--cream);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.5px;
+  }
+  .layer-source {
+    font-size: 8.5px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .layer-controls {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 4px;
+  }
+  .mini-fader {
+    flex: 1;
+    -webkit-appearance: none; appearance: none;
+    height: 3px;
+    background: var(--line);
+    border: none;
+    cursor: pointer;
+    outline: none;
+  }
+  .mini-fader::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 10px; height: 14px;
+    background: var(--red);
+    cursor: pointer;
+  }
+  .mini-fader::-moz-range-thumb {
+    width: 10px; height: 14px;
+    background: var(--red);
+    border: none;
+    cursor: pointer;
+    border-radius: 0;
+  }
+  .mini-blend {
+    background: var(--bg);
+    color: var(--cream-dim);
+    border: 1px solid var(--line);
+    font-family: inherit;
+    font-size: 9px;
+    padding: 2px 4px;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+  .mini-blend:focus { border-color: var(--red); outline: none; }
+  .layer-x {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    width: 18px; height: 18px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 10px;
+  }
+  .layer-x:hover { border-color: var(--red); color: var(--red); }
+  .opacity-val { font-size: 9px; color: var(--muted); min-width: 22px; text-align: right; }
+
+  /* ============================================================
+     MIXER — center
+     ============================================================ */
+  .mixer {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #0d0a08, #0a0807);
+    overflow: hidden;
+  }
+
+  .mixer-head {
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--line);
+    text-align: center;
+    background: radial-gradient(ellipse at center, rgba(230,14,0,0.06), transparent 70%);
+  }
+  .mixer-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    color: var(--cream);
+    text-transform: uppercase;
+  }
+  .mixer-title em { color: var(--red); font-style: italic; }
+  .mixer-sub {
+    font-size: 8.5px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    margin-top: 2px;
+    text-transform: uppercase;
+  }
+
+  /* Output (Program) monitor — the centerpiece */
+  .output-wrap {
+    padding: 16px 22px 4px;
+  }
+  .output-monitor {
+    aspect-ratio: 16/9;
+    position: relative;
+    background: #000;
+    border: 1px solid var(--line-2);
+    box-shadow:
+      0 0 0 1px var(--bg),
+      0 0 30px rgba(230,14,0,0.15),
+      inset 0 0 0 2px #000;
+    overflow: hidden;
+  }
+  .output-monitor canvas { width: 100%; height: 100%; display: block; }
+  .output-overlay {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+  }
+  .output-top { display: flex; justify-content: space-between; }
+  .live-flag {
+    color: #fff;
+    background: var(--red);
+    padding: 2px 8px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    box-shadow: 0 0 12px rgba(230,14,0,0.6);
+  }
+  .output-meta { color: rgba(255,255,255,0.55); }
+  .output-bot { display: flex; justify-content: space-between; color: rgba(255,255,255,0.4); }
+  .scanlines {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg,
+      rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 3px);
+    pointer-events: none; mix-blend-mode: multiply;
+  }
+
+  /* Fullscreen output: fill the screen, ditch the chrome */
+  .output-monitor:fullscreen,
+  .output-monitor:-webkit-full-screen {
+    aspect-ratio: auto !important;
+    width: 100vw; height: 100vh;
+    border: none;
+    box-shadow: none;
+    background: #000;
+  }
+  .output-monitor:fullscreen .output-overlay,
+  .output-monitor:fullscreen .scanlines,
+  .output-monitor:-webkit-full-screen .output-overlay,
+  .output-monitor:-webkit-full-screen .scanlines {
+    display: none;
+  }
+  .output-monitor:fullscreen canvas,
+  .output-monitor:-webkit-full-screen canvas {
+    width: 100vw; height: 100vh;
+    object-fit: contain;
+  }
+
+  /* Crossfader — the iconic A/B handle */
+  .crossfader-section {
+    padding: 14px 22px 8px;
+    text-align: center;
+  }
+  .xfader-rail {
+    position: relative;
+    height: 36px;
+    margin: 8px 0 4px;
+  }
+  .xfader-track {
+    position: absolute;
+    top: 50%; left: 0; right: 0;
+    height: 8px;
+    transform: translateY(-50%);
+    background: linear-gradient(90deg, var(--red) 0%, var(--surface) 50%, var(--red) 100%);
+    border: 1px solid var(--line-2);
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.6);
+  }
+  .xfader-track::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(90deg,
+      transparent 0px, transparent 9.9%,
+      rgba(0,0,0,0.3) 9.9%, rgba(0,0,0,0.3) 10%);
+  }
+  .xfader-input {
+    position: absolute;
+    inset: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    outline: none;
+    z-index: 2;
+  }
+  .xfader-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px; height: 36px;
+    background: var(--cream);
+    border: 1px solid var(--bg);
+    cursor: grab;
+    box-shadow: 0 0 14px rgba(244,235,217,0.4), inset 0 0 0 2px var(--surface);
+    border-radius: 1px;
+  }
+  .xfader-input::-moz-range-thumb {
+    width: 24px; height: 36px;
+    background: var(--cream);
+    border: 1px solid var(--bg);
+    cursor: grab;
+    box-shadow: 0 0 14px rgba(244,235,217,0.4);
+    border-radius: 1px;
+  }
+  .xfader-labels {
+    display: flex; justify-content: space-between;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: var(--cream-dim);
+    padding: 0 2px;
+  }
+  .xfader-labels .a { color: var(--red); }
+  .xfader-labels .b { color: var(--red); }
+  .xfader-labels.aActive .b { color: var(--cream-dim); }
+  .xfader-labels.bActive .a { color: var(--cream-dim); }
+  .xfader-pos {
+    font-size: 9px; color: var(--muted);
+    letter-spacing: 2px;
+    margin-top: 2px;
+  }
+  .xfader-pos span { color: var(--cream); }
+
+  /* Transitions */
+  .transitions {
+    padding: 10px 22px;
+  }
+  .trans-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+  }
+  .trans {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--cream-dim);
+    padding: 6px 4px;
+    font-family: inherit;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.08s;
+    text-align: center;
+  }
+  .trans:hover { border-color: var(--cream-dim); color: var(--cream); }
+  .trans.on {
+    background: var(--red);
+    color: #fff;
+    border-color: var(--red);
+    box-shadow: 0 0 10px rgba(230,14,0,0.4);
+  }
+
+  /* Composition FX */
+  .comp-fx {
+    padding: 8px 22px 14px;
+    border-top: 1px solid var(--line);
+    margin-top: auto;
+  }
+  .comp-fx-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .fx-list {
+    display: flex; flex-wrap: wrap; gap: 4px;
+  }
+  .fx {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--cream-dim);
+    padding: 5px 10px;
+    font-family: inherit;
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .fx:hover { border-color: var(--gold); color: var(--gold); }
+  .fx.on { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+
+  /* ============================================================
+     SOURCE BROWSER — bottom panel
+     ============================================================ */
+  .browser {
+    border-top: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--bg-2), var(--bg));
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    overflow: hidden;
+  }
+
+  .browser-tabs {
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+  }
+  .btab {
+    background: transparent;
+    border: none;
+    border-left: 2px solid transparent;
+    color: var(--cream-dim);
+    padding: 8px 16px;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-align: left;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.1s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .btab:hover { color: var(--cream); background: rgba(255,255,255,0.02); }
+  .btab.on {
+    color: var(--red);
+    border-left-color: var(--red);
+    background: rgba(230,14,0,0.05);
+  }
+  .btab span.count {
+    font-size: 8.5px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .btab.on span.count { color: var(--red); }
+
+  .browser-body {
+    overflow: auto;
+    padding: 10px 12px;
+    position: relative;
+  }
+  .source-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  .source {
+    aspect-ratio: 16/9;
+    position: relative;
+    background: #000;
+    border: 1px solid var(--line);
+    cursor: grab;
+    overflow: hidden;
+    transition: all 0.1s;
+  }
+  .source:hover {
+    border-color: var(--red);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(230,14,0,0.3);
+  }
+  .source canvas { width: 100%; height: 100%; display: block; }
+  .source-label {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 3px 6px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.85), transparent);
+    font-size: 9px;
+    letter-spacing: 1.2px;
+    color: var(--cream);
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+  .source-cat {
+    color: var(--gold);
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  .source.dragging { opacity: 0.4; }
+
+  .playlist-list {
+    display: flex; gap: 8px; align-items: center;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .playlist-item {
+    flex-shrink: 0;
+    width: 140px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .playlist-item:hover { border-color: var(--red); }
+  .playlist-item.on { border-color: var(--red); box-shadow: 0 0 10px rgba(230,14,0,0.3); }
+  .playlist-thumb {
+    aspect-ratio: 16/9;
+    background: #000;
+    border: 1px solid var(--line);
+  }
+  .playlist-meta {
+    display: flex; justify-content: space-between;
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+  .playlist-name { color: var(--cream); }
+  .playlist-time { color: var(--muted); }
+  .playlist-controls {
+    display: flex; gap: 6px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .effects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 4px;
+  }
+  .eff-item {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 7px 10px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--cream-dim);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.08s;
+  }
+  .eff-item:hover { border-color: var(--gold); color: var(--cream); }
+  .eff-item .eff-cat {
+    font-size: 8px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+  }
+
+  /* ============================================================
+     STATUS BAR
+     ============================================================ */
+  .statusbar {
+    background: var(--bg);
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    padding: 0 16px;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+  }
+  .status-mid { text-align: center; }
+  .status-mid .hi { color: var(--red); }
+  .status-right { display: flex; gap: 18px; }
+  .status-right span { color: var(--cream-dim); }
+  .fps-good { color: var(--teal) !important; }
+
+  /* ============================================================
+     MIC LIVE indicator + AUTO BPM badge
+     ============================================================ */
+  .mic-indicator {
+    display: none;
+    align-items: center;
+    gap: 5px;
+    font-size: 9px;
+    color: var(--red);
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    padding: 4px 7px;
+    border: 1px solid var(--red);
+    background: rgba(230,14,0,0.08);
+  }
+  .mic-indicator.show { display: inline-flex; }
+  .mic-indicator .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red);
+    animation: pulse 1.4s infinite;
+  }
+  .tempo-auto {
+    display: none;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    color: var(--teal);
+    border: 1px solid var(--teal);
+    padding: 1px 5px;
+    align-self: center;
+    text-transform: uppercase;
+  }
+  .tempo-auto.show { display: inline-block; }
+
+  /* ============================================================
+     Video input picker
+     ============================================================ */
+  .video-src-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-right: 8px;
+    margin-right: 4px;
+    border-right: 1px solid var(--line);
+  }
+  .video-src-label {
+    font-size: 8.5px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .video-src-select {
+    background: var(--surface);
+    color: var(--cream);
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--cream-dim) 50%),
+                      linear-gradient(135deg, var(--cream-dim) 50%, transparent 50%);
+    background-position: calc(100% - 10px) 50%, calc(100% - 6px) 50%;
+    background-size: 4px 4px;
+    background-repeat: no-repeat;
+    padding-right: 22px;
+  }
+  .video-src-select:hover { border-color: var(--red); color: var(--red); }
+  .video-src-select.on {
+    border-color: var(--red);
+    color: var(--red);
+    background-color: rgba(230,14,0,0.08);
+  }
+  .video-src-select option {
+    background: var(--bg);
+    color: var(--cream);
+  }
+  .video-src-status {
+    font-size: 8.5px;
+    letter-spacing: 1px;
+    color: var(--cream-dim);
+    max-width: 110px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .video-src-status.on { color: var(--teal); }
+  .video-src-status.err { color: var(--red); }
+
+  /* ============================================================
+     SCROLLBARS
+     ============================================================ */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--cream-dim); }
+
+  /* ============================================================
+     ART NOUVEAU CORNER FLOURISH (SVG class for reuse)
+     ============================================================ */
+  .nouveau-divider {
+    text-align: center;
+    margin: 4px 0;
+    color: var(--red);
+    opacity: 0.5;
+  }
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ TOPBAR ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <!-- Stylised hummingbird + Art Nouveau curl -->
+      <svg class="brand-mark" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+          <!-- hummingbird body -->
+          <path d="M8 26 C 12 20, 18 18, 24 22 C 28 24, 30 26, 32 30" />
+          <!-- beak -->
+          <path d="M32 30 L 38 31" />
+          <!-- wing -->
+          <path d="M16 22 C 14 14, 22 10, 26 14 C 22 18, 18 20, 16 22 Z" fill="currentColor" fill-opacity="0.25"/>
+          <!-- tail flourish -->
+          <path d="M8 26 C 4 28, 4 32, 8 32 C 6 30, 8 28, 12 30" />
+          <!-- nouveau curl -->
+          <path d="M2 38 C 8 36, 12 32, 14 28" stroke-opacity="0.5" />
+        </g>
+      </svg>
+      <div class="brand-text">
+        <div class="brand-name"><span class="nu">Nu</span>votion</div>
+        <div class="brand-tag">audio · reactive · visuals</div>
+      </div>
+    </div>
+
+    <div class="transport">
+      <div class="ctl">
+        <div class="ctl-label">tempo</div>
+        <div class="ctl-row">
+          <div class="tempo-display" id="tempo">120.0</div>
+          <span class="tempo-auto" id="tempo-auto">AUTO</span>
+          <button class="icon-btn" id="tap-btn">TAP</button>
+          <div class="led" id="beat-led"></div>
+        </div>
+      </div>
+
+      <div class="audio-meters">
+        <div class="meter-block"><span class="meter-label">BASS</span><div class="meter-bar"><div class="meter-fill" id="m-bass" style="--lvl: 30%"></div></div></div>
+        <div class="meter-block"><span class="meter-label">MID</span><div class="meter-bar"><div class="meter-fill" id="m-mid" style="--lvl: 50%"></div></div></div>
+        <div class="meter-block"><span class="meter-label">TREB</span><div class="meter-bar"><div class="meter-fill" id="m-treb" style="--lvl: 25%"></div></div></div>
+      </div>
+
+      <div class="ctl">
+        <div class="ctl-label">audio source</div>
+        <div class="ctl-row">
+          <select id="audio-src" class="mini-blend" style="font-size: 10px; padding: 4px 8px;">
+            <option value="simulated">SIMULATED</option>
+            <option value="mic">MICROPHONE</option>
+            <option value="system">SYSTEM (TAB)</option>
+          </select>
+          <span class="mic-indicator" id="mic-indicator">
+            <span class="dot"></span>LIVE
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="video-src-wrap">
+        <span class="video-src-label">VIDEO IN</span>
+        <select id="video-src" class="icon-btn video-src-select" title="Video input source for Blob layers">
+          <option value="off">◯ OFF</option>
+          <option value="webcam">◉ WEBCAM</option>
+          <option value="screen">▭ SCREEN</option>
+        </select>
+        <button class="icon-btn" id="video-files-btn" title="Pick video files (under 20MB each)">▤ FILES</button>
+        <span class="video-src-status" id="video-src-status" title=""></span>
+        <input type="file" id="video-file-input" accept="video/mp4,video/webm,video/quicktime,video/*" multiple hidden />
+      </div>
+      <button class="icon-btn" id="snap-btn" title="Snapshot (R)">⌗ SNAP</button>
+      <button class="icon-btn" id="full-btn" title="Fullscreen (F)">⛶ FULL</button>
+      <button class="icon-btn" id="popup-btn" title="Popup output window (P)">⧉ POP</button>
+      <button class="rec-btn" id="rec-btn" title="Record output to WebM file"><span class="dot"></span><span id="rec-label">REC</span></button>
+    </div>
+  </header>
+
+  <!-- ============ MAIN: A · MIXER · B ============ -->
+  <main class="main">
+    <!-- ===== SCENE A ===== -->
+    <section class="scene-panel A" data-scene="A">
+      <div class="panel-head">
+        <div class="scene-tag">
+          <div class="scene-letter">A</div>
+          <div class="scene-meta">
+            <div class="scene-meta-name" id="name-A">Aurora Bloom</div>
+            <div class="scene-meta-sub">3 layers · 2 effects</div>
+          </div>
+        </div>
+        <div class="panel-head-buttons">
+          <button class="pbtn" title="Save scene">⊕</button>
+          <button class="pbtn" title="Random">↻</button>
+          <button class="pbtn" title="Clear">×</button>
+        </div>
+      </div>
+
+      <div class="scene-preview">
+        <canvas id="preview-A" width="640" height="360"></canvas>
+        <div class="scanlines"></div>
+        <div class="label">PREVIEW · A</div>
+        <svg class="nouveau-corner tl" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1" d="M0 12 C 4 12, 12 4, 12 0"/></svg>
+        <svg class="nouveau-corner tr" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1" d="M0 12 C 4 12, 12 4, 12 0"/></svg>
+        <svg class="nouveau-corner bl" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1" d="M0 12 C 4 12, 12 4, 12 0"/></svg>
+        <svg class="nouveau-corner br" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1" d="M0 12 C 4 12, 12 4, 12 0"/></svg>
+      </div>
+
+      <div class="layers-section">
+        <div class="layers-section-head">
+          <div class="section-title">Layers <em>A</em></div>
+          <button class="add-layer" data-scene="A">+ ADD</button>
+        </div>
+        <div class="layers-list" id="layers-A"></div>
+      </div>
+    </section>
+
+    <!-- ===== MIXER ===== -->
+    <section class="mixer">
+      <div class="mixer-head">
+        <div class="mixer-title"><em>A</em>·<em>B</em> Mixer</div>
+        <div class="mixer-sub">program · output</div>
+      </div>
+
+      <div class="output-wrap">
+        <div class="output-monitor" id="output-monitor">
+          <canvas id="output-canvas" width="1280" height="720"></canvas>
+          <div class="scanlines"></div>
+          <div class="output-overlay">
+            <div class="output-top">
+              <div class="live-flag">⏵ ON&nbsp;AIR</div>
+              <div class="output-meta">PROGRAM</div>
+            </div>
+            <div class="output-bot">
+              <div>1920×1080 · <span id="trans-name-mon">DISSOLVE</span></div>
+              <div id="output-fps">60 fps</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="crossfader-section">
+        <div class="ctl-label" style="text-align: center;">crossfader</div>
+        <div class="xfader-rail">
+          <div class="xfader-track"></div>
+          <input type="range" min="0" max="1000" value="0" step="1" class="xfader-input" id="xfader" />
+        </div>
+        <div class="xfader-labels aActive" id="xfader-labels">
+          <span class="a">A</span>
+          <span class="b">B</span>
+        </div>
+        <div class="xfader-pos">POS <span id="xfader-pos">0%</span> · TRANS <span id="trans-name">DISSOLVE</span></div>
+      </div>
+
+      <div class="transitions">
+        <div class="ctl-label" style="text-align:center; margin-bottom: 6px;">transition</div>
+        <div class="trans-grid" id="trans-grid"></div>
+      </div>
+
+      <div class="comp-fx">
+        <div class="comp-fx-head">
+          <div class="ctl-label">composition fx</div>
+          <span class="opacity-val" id="active-fx-count" style="color:var(--gold)">0 active</span>
+        </div>
+        <div class="fx-list" id="fx-list">
+          <button class="fx" data-fx="invert">INVERT</button>
+          <button class="fx" data-fx="bw">B&amp;W</button>
+          <button class="fx" data-fx="hue">HUE-CYCLE</button>
+          <button class="fx" data-fx="vhs">VHS</button>
+          <button class="fx" data-fx="bloom">BLOOM</button>
+          <button class="fx" data-fx="kaleido">KALEIDO</button>
+          <button class="fx" data-fx="mirror">MIRROR</button>
+          <button class="fx" data-fx="scan">SCAN</button>
+          <button class="fx" data-fx="strobe">STROBE</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SCENE B ===== -->
+    <section class="scene-panel B" data-scene="B">
+      <div class="panel-head">
+        <div class="scene-tag">
+          <div class="scene-letter">B</div>
+          <div class="scene-meta">
+            <div class="scene-meta-name" id="name-B">Crimson Drift</div>
+            <div class="scene-meta-sub">2 layers · 1 effect</div>
+          </div>
+        </div>
+        <div class="panel-head-buttons">
+          <button class="pbtn" title="Save scene">⊕</button>
+          <button class="pbtn" title="Random">↻</button>
+          <button class="pbtn" title="Clear">×</button>
+        </div>
+      </div>
+
+      <div class="scene-preview">
+        <canvas id="preview-B" width="640" height="360"></canvas>
+        <div class="scanlines"></div>
+        <div class="label">PREVIEW · B</div>
+        <svg class="nouveau-corner tl" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1" d="M0 12 C 4 12, 12 4, 12 0"/></svg>
+        <svg class="nouveau-corner tr" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1" d="M0 12 C 4 12, 12 4, 12 0"/></svg>
+        <svg class="nouveau-corner bl" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1" d="M0 12 C 4 12, 12 4, 12 0"/></svg>
+        <svg class="nouveau-corner br" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1" d="M0 12 C 4 12, 12 4, 12 0"/></svg>
+      </div>
+
+      <div class="layers-section">
+        <div class="layers-section-head">
+          <div class="section-title">Layers <em>B</em></div>
+          <button class="add-layer" data-scene="B">+ ADD</button>
+        </div>
+        <div class="layers-list" id="layers-B"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ SOURCE BROWSER ============ -->
+  <section class="browser">
+    <nav class="browser-tabs">
+      <button class="btab on" data-tab="sources">SOURCES <span class="count">18</span></button>
+      <button class="btab" data-tab="effects">EFFECTS <span class="count">82</span></button>
+      <button class="btab" data-tab="transitions">TRANSITIONS <span class="count">12</span></button>
+      <button class="btab" data-tab="playlist">PLAYLIST <span class="count" id="playlist-count">0</span></button>
+    </nav>
+    <div class="browser-body" id="browser-body">
+      <!-- populated by JS -->
+    </div>
+  </section>
+
+  <!-- ============ STATUS BAR ============ -->
+  <footer class="statusbar">
+    <div>● READY</div>
+    <div class="status-mid" id="status-msg"><span class="hi">drag a source onto a layer</span> · click crossfader to mix · TAP for tempo</div>
+    <div class="status-right">
+      <span id="status-fps" class="fps-good">60 FPS</span>
+      <span>1920×1080</span>
+      <span>MIDI ○</span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+/* ============================================================
+   NUVOTION — Audio-Reactive Visual Performance Tool
+   Single-file HTML5 implementation
+   ============================================================ */
+
+// =============================================================
+// SOURCE LIBRARY (procedural "Milkdrop"-style visuals)
+// =============================================================
+const PALETTES = {
+  flame:    ['#ff3b00','#ff7a00','#ffd400','#0a0807'],
+  rose:     ['#e60e00','#ff6a8b','#d4a93d','#0a0807'],
+  abyss:    ['#4dd2c0','#1e7c8a','#0a3d4d','#000814'],
+  vapor:    ['#ff77e9','#9d6dff','#4dd2c0','#0a0014'],
+  forest:   ['#7fff00','#3a8a3a','#d4a93d','#06140a'],
+  pearl:    ['#f4ebd9','#d4a93d','#8a7a5a','#1a1410'],
+  obsidian: ['#cccccc','#666666','#e60e00','#000000'],
+  ember:    ['#fb5607','#ffbe0b','#e60e00','#1a0a00']
+};
+
+// 16 sources — each is a procedural visual generator
+// shape: [genFn, paletteName, displayName, category]
+const SOURCES = [
+  ['plasma',     'flame',    'Aurora Bloom',     'milkdrop'],
+  ['tunnel',     'rose',     'Crimson Drift',    'milkdrop'],
+  ['rings',      'abyss',    'Tidal Pulse',      'milkdrop'],
+  ['waves',      'vapor',    'Liquid Hymn',      'milkdrop'],
+  ['stars',      'pearl',    'Stellar Bloom',    'milkdrop'],
+  ['grid',       'forest',   'Mosaic Spire',     'milkdrop'],
+  ['polygon',    'ember',    'Sun Lattice',      'milkdrop'],
+  ['strobe',     'flame',    'Phosphor Pulse',   'milkdrop'],
+  ['particles',  'vapor',    'Pollen Storm',     'milkdrop'],
+  ['matrix',     'forest',   'Verdigris Code',   'milkdrop'],
+  ['noise',      'obsidian', 'Static Field',     'milkdrop'],
+  ['bars',       'rose',     'Spectrum Garden',  'milkdrop'],
+  ['kaleido',    'pearl',    'Mandala Drift',    'milkdrop'],
+  ['feedback',   'ember',    'Recursive Dream',  'feedback'],
+  ['oscill',     'abyss',    'Oscilloscope',     'milkdrop'],
+  ['nebula',     'vapor',    'Nebula Veil',      'milkdrop'],
+  // Video-based blob tracking — adapted from "Web Blob Tracking" by @pbltrr
+  ['blobRed',    'rose',     'Blob · Red',       'video'],
+  ['blobBlue',   'abyss',    'Blob · Blue',      'video']
+];
+
+// =============================================================
+// VISUAL GENERATORS  (ctx, t, w, h, audio, palette)
+// audio = { bass: 0..1, mid: 0..1, treble: 0..1, beat: 0..1 }
+// =============================================================
+const generators = {
+  plasma(ctx, t, w, h, a, p) {
+    const cells = 14;
+    const cw = w/cells, ch = h/cells;
+    const speed = 0.0022 + a.bass * 0.003;
+    for (let y = 0; y < cells; y++) {
+      for (let x = 0; x < cells; x++) {
+        const v = Math.sin(x*0.5 + t*speed) +
+                  Math.sin(y*0.42 + t*0.0017) +
+                  Math.sin((x+y)*0.25 + t*0.0011);
+        const idx = Math.max(0, Math.min(2, Math.floor(((v+3)/6)*3)));
+        ctx.fillStyle = p[idx];
+        ctx.fillRect(x*cw, y*ch, cw+1, ch+1);
+      }
+    }
+  },
+  tunnel(ctx, t, w, h, a, p) {
+    ctx.fillStyle = p[3]; ctx.fillRect(0,0,w,h);
+    const cx = w/2, cy = h/2;
+    const max = Math.sqrt(cx*cx + cy*cy);
+    const step = Math.max(6, max/24);
+    const speed = 0.08 + a.bass * 0.2;
+    for (let r = max; r > 0; r -= step) {
+      const phase = (r*1.4 - t*speed) % (step*4);
+      const idx = Math.max(0, Math.min(2, Math.floor((phase/(step*4))*3)));
+      ctx.fillStyle = p[idx];
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.fill();
+    }
+  },
+  rings(ctx, t, w, h, a, p) {
+    ctx.fillStyle = p[3]; ctx.fillRect(0,0,w,h);
+    const cx = w/2, cy = h/2;
+    const maxR = Math.min(w,h);
+    for (let i = 0; i < 6; i++) {
+      const r = ((t*0.05 + i*30) % 100) / 100 * maxR * (0.5 + a.mid*0.5);
+      ctx.strokeStyle = p[i % 3];
+      ctx.lineWidth = Math.max(1.5, 2 + a.bass*5);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.stroke();
+    }
+  },
+  waves(ctx, t, w, h, a, p) {
+    ctx.fillStyle = p[3]; ctx.fillRect(0,0,w,h);
+    for (let i = 0; i < 5; i++) {
+      ctx.strokeStyle = p[i % 3];
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      const stepX = Math.max(2, w/100);
+      for (let x = 0; x <= w; x += stepX) {
+        const y = h/2 + Math.sin(x*0.04 + t*0.005 + i*1.4) * (h/4) * (0.5 + a.bass*0.5);
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  },
+  stars(ctx, t, w, h, a, p) {
+    ctx.fillStyle = p[3]; ctx.fillRect(0,0,w,h);
+    const cx = w/2, cy = h/2;
+    const max = Math.max(w,h);
+    const speed = 0.18 + a.bass*0.4;
+    for (let i = 0; i < 100; i++) {
+      const seed = i * 137.5 + 1;
+      const angle = seed % (Math.PI*2);
+      const dist = ((seed * 7 + t*speed) % 200) / 200 * max;
+      const x = cx + Math.cos(angle) * dist;
+      const y = cy + Math.sin(angle) * dist;
+      const size = (dist/max) * 3 + 0.6 + a.beat*1.5;
+      ctx.fillStyle = p[i % 3];
+      ctx.fillRect(x, y, size, size);
+    }
+  },
+  grid(ctx, t, w, h, a, p) {
+    ctx.fillStyle = p[3]; ctx.fillRect(0,0,w,h);
+    const cells = 6;
+    const sz = Math.min(w,h)/cells;
+    const offX = (w - cells*sz)/2, offY = (h - cells*sz)/2;
+    for (let y = 0; y < cells; y++) {
+      for (let x = 0; x < cells; x++) {
+        ctx.save();
+        ctx.translate(offX + x*sz + sz/2, offY + y*sz + sz/2);
+        ctx.rotate(t*0.0022 + (x+y)*0.4);
+        ctx.fillStyle = p[(x+y) % 3];
+        const s = sz * 0.6 * (0.65 + a.beat*0.4);
+        ctx.fillRect(-s/2, -s/2, s, s);
+        ctx.restore();
+      }
+    }
+  },
+  polygon(ctx, t, w, h, a, p) {
+    ctx.fillStyle = p[3]; ctx.fillRect(0,0,w,h);
+    const cx = w/2, cy = h/2;
+    const sides = 6;
+    const baseR = Math.min(w,h)*0.14;
+    for (let r = 0; r < 5; r++) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(t*0.0014*(r+1) + r*0.5);
+      ctx.strokeStyle = p[r % 3];
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      const radius = baseR + r*baseR*0.7 + a.bass*baseR*0.4;
+      for (let i = 0; i <= sides; i++) {
+        const ang = (i/sides)*Math.PI*2;
+        const x = Math.cos(ang) * radius, y = Math.sin(ang) * radius;
+        if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+  },
+  strobe(ctx, t, w, h, a, p) {
+    const phase = Math.floor(t*0.025 + a.beat*4) % 4;
+    ctx.fillStyle = p[phase % 3];
+    ctx.fillRect(0,0,w,h);
+    if (a.beat > 0.7) {
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0,0,w,h);
+    }
+  },
+  particles(ctx, t, w, h, a, p) {
+    ctx.fillStyle = p[3] + 'cc';
+    ctx.fillRect(0,0,w,h);
+    for (let i = 0; i < 80; i++) {
+      const seed = i*234.5 + 1;
+      const x = ((seed*13) + t*(0.3 + a.bass*0.5)) % w;
+      const y = h/2 + Math.sin(t*0.003 + seed*0.001) * h*0.36 +
+                Math.cos(t*0.005 + seed) * h*0.1;
+      ctx.fillStyle = p[i % 3];
+      const sz = 2 + a.beat*4;
+      ctx.fillRect(x, y, sz, sz);
+    }
+  },
+  matrix(ctx, t, w, h, a, p) {
+    ctx.fillStyle = p[3] + '60';
+    ctx.fillRect(0,0,w,h);
+    const cols = Math.max(8, Math.floor(w/14));
+    const cw = w/cols;
+    const fs = Math.max(9, cw*0.9);
+    ctx.font = fs + "px 'JetBrains Mono', monospace";
+    for (let i = 0; i < cols; i++) {
+      const speed = 0.15 + (i % 5)*0.04 + a.mid*0.2;
+      const y = ((i*73 + t*speed) % (h+30)) - 15;
+      ctx.fillStyle = p[0];
+      ctx.fillText(String.fromCharCode(33 + ((i*7 + Math.floor(t*0.012)) % 90)), i*cw, y);
+      ctx.fillStyle = p[1] + '90';
+      ctx.fillText(String.fromCharCode(33 + ((i*11 + Math.floor(t*0.012) - 1) % 90)), i*cw, y - fs);
+    }
+  },
+  noise(ctx, t, w, h, a, p) {
+    const cells = 16;
+    const cw = w/cells, ch = h/cells;
+    const tt = Math.floor(t*0.06 + a.beat*3);
+    for (let y = 0; y < cells; y++) {
+      for (let x = 0; x < cells; x++) {
+        const v = (x*73 + y*131 + tt*191) % 4;
+        ctx.fillStyle = p[v];
+        ctx.fillRect(x*cw, y*ch, cw+1, ch+1);
+      }
+    }
+  },
+  bars(ctx, t, w, h, a, p) {
+    ctx.fillStyle = p[3]; ctx.fillRect(0,0,w,h);
+    const bars = 16;
+    const bw = w/bars;
+    for (let i = 0; i < bars; i++) {
+      // simulate spectrum: low bars driven by bass, mid by mid, high by treble
+      let amp;
+      if (i < 5) amp = a.bass;
+      else if (i < 11) amp = a.mid;
+      else amp = a.treble;
+      const v = (Math.sin(t*0.005 + i*0.7) + Math.sin(t*0.011 + i*0.31) + 2)/4;
+      const v2 = v * (0.4 + amp*0.6);
+      const bh = h * v2;
+      ctx.fillStyle = p[i % 3];
+      ctx.fillRect(i*bw + 1, h - bh, bw - 2, bh);
+    }
+  },
+  kaleido(ctx, t, w, h, a, p) {
+    ctx.fillStyle = p[3]; ctx.fillRect(0,0,w,h);
+    const cx = w/2, cy = h/2;
+    const segs = 8;
+    ctx.save();
+    ctx.translate(cx, cy);
+    for (let s = 0; s < segs; s++) {
+      ctx.save();
+      ctx.rotate((s/segs)*Math.PI*2);
+      // draw a wedge of triangles/circles
+      for (let i = 0; i < 6; i++) {
+        const r = (i+1) * Math.min(w,h)/16;
+        const ang = t*0.001 + i*0.4;
+        ctx.fillStyle = p[(i+s) % 3];
+        ctx.beginPath();
+        ctx.arc(Math.cos(ang)*r*0.5, Math.sin(ang)*r*0.5, 6 + a.bass*8, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+  },
+  feedback(ctx, t, w, h, a, p) {
+    // Recursive zoom: scale a copy of recent canvas inward
+    if (!ctx._fbBuf) {
+      ctx._fbBuf = document.createElement('canvas');
+      ctx._fbBuf.width = w; ctx._fbBuf.height = h;
+    }
+    const bctx = ctx._fbBuf.getContext('2d');
+    // copy current to buffer, then re-blit scaled
+    bctx.drawImage(ctx.canvas, 0, 0, w, h);
+    ctx.fillStyle = p[3] + 'aa'; ctx.fillRect(0,0,w,h);
+    // draw shape
+    ctx.save();
+    ctx.translate(w/2, h/2);
+    ctx.rotate(t*0.0008);
+    ctx.fillStyle = p[0];
+    const sz = 30 + a.beat*40;
+    ctx.fillRect(-sz/2, -sz/2, sz, sz);
+    ctx.fillStyle = p[1];
+    ctx.beginPath();
+    ctx.arc(20, 0, 12 + a.bass*20, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+    // recursive blit
+    const z = 0.96;
+    ctx.globalAlpha = 0.85;
+    ctx.drawImage(ctx._fbBuf, w*(1-z)/2, h*(1-z)/2, w*z, h*z);
+    ctx.globalAlpha = 1;
+  },
+  oscill(ctx, t, w, h, a, p) {
+    ctx.fillStyle = p[3]; ctx.fillRect(0,0,w,h);
+    // grid lines
+    ctx.strokeStyle = p[2] + '50';
+    ctx.lineWidth = 1;
+    for (let i = 1; i < 8; i++) {
+      ctx.beginPath();
+      ctx.moveTo(0, i*h/8); ctx.lineTo(w, i*h/8);
+      ctx.moveTo(i*w/8, 0); ctx.lineTo(i*w/8, h);
+      ctx.stroke();
+    }
+    // waveform
+    ctx.strokeStyle = p[0];
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 2) {
+      const phase = x*0.04 + t*0.008;
+      const amp = (a.bass + a.mid + a.treble)/3 * 0.7 + 0.3;
+      const y = h/2 + Math.sin(phase) * h * 0.35 * amp +
+                Math.sin(phase*3 + t*0.01) * h * 0.1 * amp;
+      if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    // second trace
+    ctx.strokeStyle = p[1];
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 2) {
+      const phase = x*0.06 + t*0.011;
+      const y = h/2 + Math.cos(phase) * h * 0.25 * (0.5 + a.treble);
+      if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  },
+  nebula(ctx, t, w, h, a, p) {
+    ctx.fillStyle = p[3]; ctx.fillRect(0,0,w,h);
+    const cx = w/2, cy = h/2;
+    const max = Math.max(w,h);
+    // gas clouds: many translucent circles
+    for (let i = 0; i < 40; i++) {
+      const seed = i*97;
+      const ang = (seed * 0.123 + t*0.0006) % (Math.PI*2);
+      const dist = (Math.sin(seed + t*0.0008) * 0.5 + 0.5) * max * 0.5;
+      const x = cx + Math.cos(ang)*dist;
+      const y = cy + Math.sin(ang)*dist;
+      const r = 30 + (seed % 50) + a.bass*30;
+      const color = p[i % 3];
+      ctx.fillStyle = color + '20';
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    // bright stars on top
+    for (let i = 0; i < 30; i++) {
+      const seed = i*173 + 1;
+      const x = (seed*17) % w;
+      const y = (seed*23) % h;
+      const tw = (Math.sin(t*0.005 + seed)*0.5 + 0.5);
+      ctx.fillStyle = p[0];
+      ctx.globalAlpha = 0.4 + tw*0.6;
+      ctx.fillRect(x, y, 1.5 + tw*1.5, 1.5 + tw*1.5);
+    }
+    ctx.globalAlpha = 1;
+  },
+  // ----- Webcam blob tracking -------------------------------------
+  // Algorithm adapted from "Web Blob Tracking" by Pablo Torres (@pbltrr)
+  // https://www.instagram.com/pbltrr/  ·  Original uses p5.js; this is
+  // a vanilla-canvas reimplementation that integrates with Nuvotion's
+  // layer compositor and reads audio reactivity from state.audio.
+  blobRed(ctx, t, w, h, a, p)  { drawBlobTrack(ctx, t, w, h, a, p, 'red'); },
+  blobBlue(ctx, t, w, h, a, p) { drawBlobTrack(ctx, t, w, h, a, p, 'blue'); }
+};
+
+// =============================================================
+// VIDEO INPUT MANAGER
+// Unified pool for the Blob source — supports:
+//   • webcam   (getUserMedia)
+//   • file     (local file via <input type=file>; uses URL.createObjectURL)
+//   • screen   (getDisplayMedia)
+// `webcam` is kept as the global name for back-compat with drawBlobTrack.
+// =============================================================
+const webcam = {
+  videoEl: null,
+  stream: null,         // present for webcam + screen, null for file
+  fileUrl: null,        // present for file mode
+  type: null,           // 'webcam' | 'file' | 'screen'
+  ready: false,
+  starting: false,
+  mirror: true,         // mirror horizontally (only sensible for webcam)
+  // Playlist (file mode only)
+  playlist: null,       // [{ file, name, size, url }] or null
+  playlistIdx: 0,
+  playlistEndedHandler: null,
+  // small offscreen for cheap pixel sampling
+  sampleCanvas: null,
+  sampleCtx: null,
+  sampleW: 320,
+  sampleH: 180,
+  sampleData: null,
+  lastSampleFrame: -1
+};
+
+const PLAYLIST_MAX_BYTES = 20 * 1024 * 1024;  // 20 MB per clip
+
+// Build the offscreen sampling canvas once
+function ensureSampleCanvas() {
+  if (webcam.sampleCanvas) return;
+  webcam.sampleCanvas = document.createElement('canvas');
+  webcam.sampleCanvas.width = webcam.sampleW;
+  webcam.sampleCanvas.height = webcam.sampleH;
+  webcam.sampleCtx = webcam.sampleCanvas.getContext('2d', { willReadFrequently: true });
+}
+
+// Wait for a <video> element to be playable
+function waitForVideo(v, timeoutMs = 8000) {
+  return new Promise((resolve, reject) => {
+    const to = setTimeout(() => reject(new Error('Video startup timed out')), timeoutMs);
+    function ready() {
+      clearTimeout(to);
+      v.removeEventListener('loadedmetadata', ready);
+      v.removeEventListener('loadeddata', ready);
+      v.play().then(resolve).catch(err => {
+        // Autoplay can fail on Safari for files w/o user gesture; we already
+        // come from a user click so this usually succeeds.
+        reject(err);
+      });
+    }
+    if (v.readyState >= 2 && v.videoWidth > 0) ready();
+    else {
+      v.addEventListener('loadedmetadata', ready);
+      v.addEventListener('loadeddata', ready);
+    }
+  });
+}
+
+function setVideoStatus(text, kind) {
+  const el = $('video-src-status');
+  if (!el) return;
+  el.textContent = text || '';
+  el.title = text || '';
+  el.classList.toggle('on', kind === 'on');
+  el.classList.toggle('err', kind === 'err');
+  // also reflect on the select itself
+  $('video-src').classList.toggle('on', kind === 'on');
+}
+
+async function setVideoSource(type) {
+  // Tear down whatever was running
+  await stopVideoSource();
+
+  if (!type || type === 'off') {
+    webcam.type = null;
+    setVideoStatus('');
+    flashStatus('Video input off');
+    return;
+  }
+
+  webcam.starting = true;
+  try {
+    if (type === 'webcam') {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('getUserMedia not available');
+      }
+      setVideoStatus('starting...');
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
+      const v = document.createElement('video');
+      v.autoplay = true; v.playsInline = true; v.muted = true;
+      v.srcObject = stream;
+      await waitForVideo(v);
+      webcam.stream = stream;
+      webcam.videoEl = v;
+      webcam.type = 'webcam';
+      webcam.mirror = true;
+      stream.getVideoTracks()[0].addEventListener('ended', () => {
+        $('video-src').value = 'off';
+        setVideoSource('off');
+      });
+      setVideoStatus('webcam live', 'on');
+      flashStatus('Webcam live · drop Blob source onto a layer');
+    }
+    else if (type === 'screen') {
+      if (!navigator.mediaDevices?.getDisplayMedia) {
+        throw new Error('getDisplayMedia not available');
+      }
+      setVideoStatus('picking screen...');
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } },
+        audio: false
+      });
+      const v = document.createElement('video');
+      v.autoplay = true; v.playsInline = true; v.muted = true;
+      v.srcObject = stream;
+      await waitForVideo(v);
+      webcam.stream = stream;
+      webcam.videoEl = v;
+      webcam.type = 'screen';
+      webcam.mirror = false;
+      stream.getVideoTracks()[0].addEventListener('ended', () => {
+        $('video-src').value = 'off';
+        setVideoSource('off');
+      });
+      setVideoStatus('screen live', 'on');
+      flashStatus('Screen capture live');
+    }
+    ensureSampleCanvas();
+    webcam.ready = true;
+  } catch (err) {
+    console.error('Video source:', err);
+    setVideoStatus(err.message.slice(0, 30), 'err');
+    flashStatus('Video failed: ' + err.message);
+    webcam.ready = false;
+    webcam.type = null;
+    $('video-src').value = 'off';
+  }
+  webcam.starting = false;
+}
+
+function updatePlaylistCount() {
+  const el = $('playlist-count');
+  if (el) el.textContent = (webcam.playlist?.length || 0).toString();
+}
+
+// Load one or more video files: filter to videos under PLAYLIST_MAX_BYTES,
+// build a playlist, and start the first clip. When multiple files are
+// loaded, they auto-advance via the 'ended' event and loop the queue.
+async function loadVideoFiles(fileList) {
+  const all = Array.from(fileList);
+  const videos = all.filter(f => f.type.startsWith('video/'));
+  const eligible = videos.filter(f => f.size < PLAYLIST_MAX_BYTES);
+  const tooBig = videos.length - eligible.length;
+  const nonVideo = all.length - videos.length;
+
+  if (!eligible.length) {
+    const msg = tooBig > 0
+      ? `All ${tooBig} video${tooBig > 1 ? 's' : ''} exceed 20MB limit`
+      : 'No video files in selection';
+    throw new Error(msg);
+  }
+
+  // Tear down any prior source (webcam/screen) before file mode
+  if (webcam.type && webcam.type !== 'file') {
+    await stopVideoSource();
+  }
+  // Revoke any old playlist URLs to avoid memory leaks
+  if (webcam.playlist) {
+    for (const item of webcam.playlist) {
+      try { URL.revokeObjectURL(item.url); } catch (e) {}
+    }
+  }
+
+  webcam.playlist = eligible.map(f => ({
+    file: f,
+    name: f.name,
+    size: f.size,
+    url: URL.createObjectURL(f)
+  }));
+  webcam.playlistIdx = 0;
+
+  await playPlaylistItem(0);
+
+  // Build human-friendly status
+  const parts = [`${eligible.length} clip${eligible.length > 1 ? 's' : ''} loaded`];
+  if (tooBig > 0) parts.push(`${tooBig} skipped (>20MB)`);
+  if (nonVideo > 0) parts.push(`${nonVideo} non-video skipped`);
+  flashStatus(parts.join(' · '));
+
+  // refresh the playlist tab if it's currently visible
+  if (state.activeTab === 'playlist') buildBrowser();
+  updatePlaylistCount();
+}
+
+// Switch to a specific playlist index. Loops if only 1 entry; chains via
+// 'ended' otherwise.
+async function playPlaylistItem(idx) {
+  if (!webcam.playlist || !webcam.playlist.length) return;
+  const N = webcam.playlist.length;
+  webcam.playlistIdx = ((idx % N) + N) % N;
+  const item = webcam.playlist[webcam.playlistIdx];
+
+  // Tear down previous element (keep the playlist itself intact)
+  if (webcam.videoEl) {
+    if (webcam.playlistEndedHandler) {
+      webcam.videoEl.removeEventListener('ended', webcam.playlistEndedHandler);
+      webcam.playlistEndedHandler = null;
+    }
+    try { webcam.videoEl.pause(); } catch (e) {}
+    try { webcam.videoEl.removeAttribute('src'); webcam.videoEl.load(); } catch (e) {}
+    webcam.videoEl = null;
+  }
+
+  const v = document.createElement('video');
+  v.autoplay = true;
+  v.loop = (N === 1);          // loop only when there's a single clip
+  v.playsInline = true;
+  v.muted = true;
+  v.src = item.url;
+  await waitForVideo(v);
+
+  // Auto-advance for multi-clip playlists
+  if (N > 1) {
+    webcam.playlistEndedHandler = () => {
+      playPlaylistItem(webcam.playlistIdx + 1).catch(err => {
+        console.error('Next track failed:', err);
+        flashStatus('Next track failed: ' + err.message);
+      });
+    };
+    v.addEventListener('ended', webcam.playlistEndedHandler);
+  }
+
+  webcam.videoEl = v;
+  webcam.type = 'file';
+  webcam.mirror = false;
+  webcam.ready = true;
+  ensureSampleCanvas();
+
+  const niceName = item.name.length > 20 ? item.name.slice(0, 18) + '…' : item.name;
+  const counter = N > 1 ? ` (${webcam.playlistIdx + 1}/${N})` : '';
+  setVideoStatus(niceName + counter, 'on');
+  // Indicate file mode via the FILES button highlight; the dropdown
+  // stays at 'off' since 'file' isn't one of its values.
+  $('video-files-btn').classList.add('on');
+  $('video-src').value = 'off';
+
+  // Refresh playlist UI to show new current item
+  if (state.activeTab === 'playlist') buildBrowser();
+}
+
+// Single-file convenience wrapper used by drag-drop with one file
+async function loadVideoFile(file) {
+  return loadVideoFiles([file]);
+}
+
+// Skip to next / previous track in the loaded playlist
+function playlistNext() {
+  if (!webcam.playlist || webcam.playlist.length < 2) {
+    flashStatus('No playlist loaded');
+    return;
+  }
+  playPlaylistItem(webcam.playlistIdx + 1).catch(err =>
+    flashStatus('Next failed: ' + err.message));
+}
+function playlistPrev() {
+  if (!webcam.playlist || webcam.playlist.length < 2) {
+    flashStatus('No playlist loaded');
+    return;
+  }
+  playPlaylistItem(webcam.playlistIdx - 1).catch(err =>
+    flashStatus('Prev failed: ' + err.message));
+}
+
+async function stopVideoSource() {
+  if (webcam.stream) {
+    try { webcam.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+    webcam.stream = null;
+  }
+  if (webcam.videoEl) {
+    if (webcam.playlistEndedHandler) {
+      webcam.videoEl.removeEventListener('ended', webcam.playlistEndedHandler);
+      webcam.playlistEndedHandler = null;
+    }
+    try { webcam.videoEl.pause(); } catch (e) {}
+    try { webcam.videoEl.srcObject = null; } catch (e) {}
+    try { webcam.videoEl.removeAttribute('src'); webcam.videoEl.load(); } catch (e) {}
+    webcam.videoEl = null;
+  }
+  if (webcam.fileUrl) {
+    try { URL.revokeObjectURL(webcam.fileUrl); } catch (e) {}
+    webcam.fileUrl = null;
+  }
+  if (webcam.playlist) {
+    for (const item of webcam.playlist) {
+      try { URL.revokeObjectURL(item.url); } catch (e) {}
+    }
+    webcam.playlist = null;
+    webcam.playlistIdx = 0;
+  }
+  webcam.ready = false;
+  webcam.type = null;
+  webcam.sampleData = null;
+  webcam.lastSampleFrame = -1;
+  setVideoStatus('');
+  const fb = $('video-files-btn');
+  if (fb) fb.classList.remove('on');
+  updatePlaylistCount();
+}
+
+// Legacy aliases — earlier code referenced these
+function startWebcam() { return setVideoSource('webcam'); }
+function stopWebcam()  { return setVideoSource('off'); }
+function toggleWebcam() {
+  if (webcam.ready && webcam.type === 'webcam') setVideoSource('off');
+  else setVideoSource('webcam');
+}
+
+// Pull one fresh frame into the small sampling canvas and grab pixels.
+// Called once per frame from loop() — all blob layers share this data.
+function sampleWebcamFrame(frameNum) {
+  if (!webcam.ready || !webcam.videoEl) return;
+  if (webcam.lastSampleFrame === frameNum) return;  // already done this frame
+  if (webcam.videoEl.readyState < 2) return;
+  webcam.sampleCtx.drawImage(webcam.videoEl, 0, 0, webcam.sampleW, webcam.sampleH);
+  webcam.sampleData = webcam.sampleCtx.getImageData(0, 0, webcam.sampleW, webcam.sampleH);
+  webcam.lastSampleFrame = frameNum;
+}
+
+// Lightweight RGB→HSV (channels 0..255 → h:0..360, s:0..100, v:0..100)
+function rgb2hsv(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const d = max - min;
+  let h = 0;
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  const s = max === 0 ? 0 : (d / max) * 100;
+  return [h, s, max * 100];
+}
+
+// Find blobs of target color across the sampled image.
+// Returns array of { nx, ny, r, g, b } with normalized 0..1 coords.
+function detectBlobs(imgData, mode, audio) {
+  const { width: sw, height: sh, data } = imgData;
+  const candidates = [];
+  const grid = 6;
+  for (let y = 0; y < sh; y += grid) {
+    const row = y * sw;
+    for (let x = 0; x < sw; x += grid) {
+      const idx = (row + x) * 4;
+      const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+      // quick reject by saturation/brightness
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      if (max < 60) continue;
+      if ((max - min) / Math.max(1, max) < 0.25) continue;
+      const [hv, sv, bv] = rgb2hsv(r, g, b);
+      let valid = false;
+      if (mode === 'blue' && hv > 180 && hv < 250 && sv > 25 && bv > 25) valid = true;
+      else if (mode === 'red' && (hv < 25 || hv > 335) && sv > 25 && bv > 25) valid = true;
+      if (valid) candidates.push({ nx: x / sw, ny: y / sh, r, g, b });
+    }
+  }
+  // Fisher–Yates shuffle (cheap)
+  for (let i = candidates.length - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+  }
+  // Density driven by audio.bass — more blobs on heavy bass
+  const density = Math.floor(8 + audio.bass * 32);
+  return candidates.slice(0, Math.min(density, candidates.length));
+}
+
+function drawBlobTrack(ctx, t, w, h, audio, palette, mode) {
+  // Background
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, w, h);
+
+  // Placeholder if no video source ready
+  if (!webcam.ready) {
+    ctx.fillStyle = '#0a0807';
+    ctx.fillRect(0, 0, w, h);
+    // crosshairs
+    ctx.strokeStyle = palette[0] + '40';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h);
+    ctx.moveTo(0, h/2); ctx.lineTo(w, h/2);
+    ctx.stroke();
+    // text
+    ctx.fillStyle = palette[0];
+    ctx.font = `${Math.max(14, w/40)}px 'JetBrains Mono', monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText('● NO VIDEO INPUT', w/2, h/2 - 8);
+    ctx.fillStyle = palette[2];
+    ctx.font = `${Math.max(10, w/70)}px 'JetBrains Mono', monospace`;
+    ctx.fillText('PICK WEBCAM / FILE / SCREEN', w/2, h/2 + 16);
+    ctx.textAlign = 'start';
+    return;
+  }
+
+  const v = webcam.videoEl;
+  const vw = v.videoWidth, vh = v.videoHeight;
+  if (!vw || !vh) return;
+
+  // Cover-fit the video into layer canvas
+  const ar = vw / vh;
+  const tar = w / h;
+  let dw, dh, dx, dy;
+  if (ar > tar) {
+    dh = h; dw = h * ar;
+    dx = (w - dw) / 2; dy = 0;
+  } else {
+    dw = w; dh = w / ar;
+    dx = 0; dy = (h - dh) / 2;
+  }
+  // Mirror horizontally only for webcam (standard mirror UX);
+  // file & screen sources draw natively.
+  if (webcam.mirror) {
+    ctx.save();
+    ctx.translate(w, 0); ctx.scale(-1, 1);
+    ctx.drawImage(v, w - dx - dw, dy, dw, dh);
+    ctx.restore();
+  } else {
+    ctx.drawImage(v, dx, dy, dw, dh);
+  }
+
+  // Per-layer state cached on the ctx itself
+  if (!ctx._blob) ctx._blob = { tracked: [], lastTrack: 0, mode };
+  const st = ctx._blob;
+
+  // Re-detect on a rate that responds to audio (faster on bass hits)
+  const rateMs = 90 + (1 - audio.bass) * 220;
+  if (t - st.lastTrack > rateMs || st.mode !== mode) {
+    st.mode = mode;
+    if (webcam.sampleData) {
+      const blobs = detectBlobs(webcam.sampleData, mode, audio);
+      // Map normalized coords → mirrored canvas coords + blob sizing
+      const variation = 30 + audio.beat * 90;
+      st.tracked = blobs.map(b => {
+        const baseSize = 12 + ((b.r + b.g + b.b) / 3 / 255) * 36 + audio.beat * 18;
+        const px = webcam.mirror
+          ? w - (dx + b.nx * dw)        // mirrored X for webcam
+          : dx + b.nx * dw;             // native X for file/screen
+        const py = dy + b.ny * dh;
+        return {
+          x: px, y: py,
+          r: b.r, g: b.g, b: b.b,
+          w: Math.max(4, baseSize + (Math.random() - 0.5) * variation),
+          h: Math.max(4, baseSize + (Math.random() - 0.5) * variation)
+        };
+      });
+    }
+    st.lastTrack = t;
+  }
+
+  // Curvy connecting line between all tracked points
+  if (st.tracked.length > 1) {
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.18 + audio.mid * 0.55})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    const tf = t * 0.001;
+    const ca = 24 + audio.mid * 90 + audio.beat * 30;
+    for (let i = 0; i < st.tracked.length; i++) {
+      const pt = st.tracked[i];
+      const ox = Math.sin(pt.x * 0.005 + tf) * ca +
+                 Math.cos(pt.x * 0.08 + tf * 2) * (audio.beat * 25);
+      const oy = Math.cos(pt.y * 0.005 + tf + 100) * ca +
+                 Math.sin(pt.y * 0.08 + tf * 2) * (audio.beat * 25);
+      const x = pt.x + ox, y = pt.y + oy;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // Tracking rectangles + RGB swatches + labels
+  ctx.lineWidth = 1.2;
+  ctx.font = `10px 'JetBrains Mono', monospace`;
+  for (const pt of st.tracked) {
+    // outline box
+    ctx.strokeStyle = 'rgba(180, 180, 180, 0.85)';
+    ctx.strokeRect(pt.x - pt.w/2, pt.y - pt.h/2, pt.w, pt.h);
+    // color swatch
+    ctx.fillStyle = `rgb(${pt.r|0},${pt.g|0},${pt.b|0})`;
+    ctx.fillRect(pt.x + 10, pt.y - 7, 14, 14);
+    // RGB label
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.78)';
+    ctx.fillText(`${pt.r|0}.${pt.g|0}.${pt.b|0}`, pt.x + 28, pt.y + 4);
+  }
+}
+
+// =============================================================
+// EFFECTS LIBRARY (sample 24 of "82" effects)
+// =============================================================
+const EFFECTS = [
+  ['DISTORT',    'DISTORT'], ['DRIFT',      'DISTORT'], ['MELT',       'DISTORT'],
+  ['SHEAR',      'DISTORT'], ['ZOOM',       'DISTORT'], ['ROTATE',     'DISTORT'],
+  ['CHROMATIC',  'COLOR'],   ['HUE',        'COLOR'],   ['INVERT',     'COLOR'],
+  ['SATURATE',   'COLOR'],   ['POSTERIZE',  'COLOR'],   ['DUOTONE',    'COLOR'],
+  ['MIRROR',     'REFLECT'], ['KALEIDO',    'REFLECT'], ['SYMMETRY',   'REFLECT'],
+  ['TILE',       'REFLECT'], ['ECHO',       'REFLECT'], ['FRACTAL',    'REFLECT'],
+  ['NOISE',      'TEXTURE'], ['GRAIN',      'TEXTURE'], ['SCANLINE',   'TEXTURE'],
+  ['CRT',        'TEXTURE'], ['VHS',        'TEXTURE'], ['HALFTONE',   'TEXTURE']
+];
+
+// =============================================================
+// TRANSITIONS
+// =============================================================
+const TRANSITIONS = [
+  'DISSOLVE', 'WIPE', 'PUSH', 'SLICE',
+  'PIXEL', 'MELT', 'WARP', 'CHECK',
+  'IRIS', 'BAND', 'CRUSH', 'INVERT','ROTATE',
+];
+
+// =============================================================
+// SCENES & STATE
+// =============================================================
+const state = {
+  bpm: 120,
+  startTime: performance.now(),
+  beatPhase: 0,
+  taps: [],
+  audio: { bass: 0.3, mid: 0.4, treble: 0.25, beat: 0 },
+  // Real-time audio input
+  audioMode: 'simulated',     // 'simulated' | 'mic' | 'system'
+  audioCtx: null,
+  analyser: null,
+  mediaStream: null,
+  freqData: null,
+  audioPeaks: { bass: 0.15, mid: 0.15, treble: 0.15 },  // for auto-gain
+  bassEnergyHist: [],
+  beatHistory: [],            // timestamps for BPM detection
+  // Output windowing
+  outputWindow: null,         // popup window reference
+  outputCheckTimer: null,
+  xfader: 0,         // 0..1 (0 = full A, 1 = full B)
+  transition: 0,     // index into TRANSITIONS
+  fxActive: new Set(),
+  recording: false,
+  recorder: null,             // active MediaRecorder + chunks (see startRecording)
+  scenes: {
+    A: {
+      name: 'Aurora Bloom',
+      layers: [
+        { source: 0, opacity: 1.0, blend: 'source-over', canvas: null, ctx: null },
+        { source: 8, opacity: 0.5, blend: 'screen',      canvas: null, ctx: null },
+        { source: 15,opacity: 0.3, blend: 'lighter',     canvas: null, ctx: null }
+      ],
+      canvas: null, ctx: null
+    },
+    B: {
+      name: 'Crimson Drift',
+      layers: [
+        { source: 1, opacity: 1.0, blend: 'source-over', canvas: null, ctx: null },
+        { source: 12,opacity: 0.55,blend: 'overlay',     canvas: null, ctx: null }
+      ],
+      canvas: null, ctx: null
+    }
+  },
+  activeTab: 'sources',
+  draggingSource: null,
+  beatLast: 0
+};
+
+const BLEND_MODES = [
+  ['source-over','NRM'], ['screen','SCR'], ['multiply','MUL'],
+  ['lighter','ADD'], ['overlay','OVL'], ['difference','DIF'],
+  ['hard-light','HRD'], ['soft-light','SFT'], ['color-dodge','DDG']
+];
+
+// DOM refs
+const $ = id => document.getElementById(id);
+const previewA = $('preview-A'), previewB = $('preview-B');
+const ctxA = previewA.getContext('2d'), ctxB = previewB.getContext('2d');
+const outputCanvas = $('output-canvas');
+const outCtx = outputCanvas.getContext('2d');
+
+// =============================================================
+// SETUP CANVASES PER SCENE & PER LAYER
+// =============================================================
+function makeOff() {
+  const c = document.createElement('canvas');
+  c.width = 1280; c.height = 720;
+  return c;
+}
+
+function initCanvases() {
+  for (const k of ['A','B']) {
+    const sc = state.scenes[k];
+    sc.canvas = document.createElement('canvas');
+    sc.canvas.width = 1280; sc.canvas.height = 720;
+    sc.ctx = sc.canvas.getContext('2d');
+    for (const layer of sc.layers) {
+      layer.canvas = document.createElement('canvas');
+      layer.canvas.width = 1280; layer.canvas.height = 720;
+      layer.ctx = layer.canvas.getContext('2d');
+    }
+  }
+}
+
+// =============================================================
+// BUILD UI
+// =============================================================
+function renderLayers(sceneKey) {
+  const list = $(`layers-${sceneKey}`);
+  list.innerHTML = '';
+  const scene = state.scenes[sceneKey];
+  scene.layers.forEach((layer, idx) => {
+    const src = SOURCES[layer.source];
+    const li = document.createElement('div');
+    li.className = 'layer';
+    li.dataset.scene = sceneKey;
+    li.dataset.idx = idx;
+    li.innerHTML = `
+      <div class="layer-thumb">
+        <canvas width="80" height="48"></canvas>
+      </div>
+      <div class="layer-info">
+        <div class="layer-info-top">
+          <div class="layer-name">${src[2]}</div>
+          <div class="layer-source">${src[3]}</div>
+        </div>
+        <div class="layer-controls">
+          <select class="mini-blend" data-action="blend">
+            ${BLEND_MODES.map(([v,n]) =>
+              `<option value="${v}" ${v===layer.blend?'selected':''}>${n}</option>`).join('')}
+          </select>
+          <input type="range" class="mini-fader" data-action="opacity" min="0" max="100" value="${Math.round(layer.opacity*100)}" />
+          <span class="opacity-val">${Math.round(layer.opacity*100)}</span>
+          <button class="layer-x" data-action="remove" title="Remove">×</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(li);
+
+    // wire events
+    li.querySelector('[data-action=opacity]').addEventListener('input', e => {
+      layer.opacity = +e.target.value / 100;
+      li.querySelector('.opacity-val').textContent = e.target.value;
+    });
+    li.querySelector('[data-action=blend]').addEventListener('change', e => {
+      layer.blend = e.target.value;
+    });
+    li.querySelector('[data-action=remove]').addEventListener('click', e => {
+      e.stopPropagation();
+      scene.layers.splice(idx, 1);
+      renderLayers(sceneKey);
+      updateSceneMeta();
+    });
+    // drop target
+    li.addEventListener('dragover', e => { e.preventDefault(); li.classList.add('active'); });
+    li.addEventListener('dragleave', () => li.classList.remove('active'));
+    li.addEventListener('drop', e => {
+      e.preventDefault();
+      li.classList.remove('active');
+      const srcIdx = +e.dataTransfer.getData('source');
+      if (!isNaN(srcIdx)) {
+        layer.source = srcIdx;
+        renderLayers(sceneKey);
+        flashStatus(`Replaced ${src[2]} → ${SOURCES[srcIdx][2]} on ${sceneKey}`);
+        // If it's a webcam source, suggest enabling cam
+        if (SOURCES[srcIdx][3] === 'webcam' && !webcam.ready) {
+          setTimeout(() => flashStatus('◉ Click CAM in topbar to enable webcam'), 1100);
+        }
+      }
+    });
+  });
+}
+
+function updateSceneMeta() {
+  for (const k of ['A','B']) {
+    const sc = state.scenes[k];
+    $(`name-${k}`).textContent = sc.name;
+    const sub = sc.layers.length + ' layer' + (sc.layers.length === 1 ? '' : 's');
+    document.querySelector(`.scene-panel.${k} .scene-meta-sub`).textContent = sub;
+  }
+}
+
+function buildTransitions() {
+  const grid = $('trans-grid');
+  TRANSITIONS.forEach((t, i) => {
+    const b = document.createElement('button');
+    b.className = 'trans' + (i === state.transition ? ' on' : '');
+    b.textContent = t;
+    b.addEventListener('click', () => {
+      state.transition = i;
+      grid.querySelectorAll('.trans').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      $('trans-name').textContent = t;
+      $('trans-name-mon').textContent = t;
+      flashStatus(`Transition: ${t}`);
+    });
+    grid.appendChild(b);
+  });
+}
+
+function buildBrowser() {
+  const body = $('browser-body');
+  body.innerHTML = '';
+  if (state.activeTab === 'sources') {
+    const grid = document.createElement('div');
+    grid.className = 'source-grid';
+    SOURCES.forEach((src, idx) => {
+      const cell = document.createElement('div');
+      cell.className = 'source';
+      cell.draggable = true;
+      cell.dataset.source = idx;
+      cell.innerHTML = `
+        <canvas width="160" height="90"></canvas>
+        <div class="source-label">
+          <span>${src[2]}</span>
+          <span class="source-cat">${src[3]}</span>
+        </div>
+      `;
+      cell.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('source', idx);
+        cell.classList.add('dragging');
+      });
+      cell.addEventListener('dragend', () => cell.classList.remove('dragging'));
+      cell.addEventListener('click', () => {
+        // double-click would be nicer but click adds to A by default
+      });
+      cell.addEventListener('dblclick', () => {
+        // add as new layer to A
+        state.scenes.A.layers.push({
+          source: idx, opacity: 1.0, blend: 'source-over',
+          canvas: makeOff(), ctx: null
+        });
+        const last = state.scenes.A.layers[state.scenes.A.layers.length-1];
+        last.ctx = last.canvas.getContext('2d');
+        renderLayers('A');
+        updateSceneMeta();
+        flashStatus(`Added ${src[2]} → A`);
+        if (src[3] === 'webcam' && !webcam.ready) {
+          setTimeout(() => flashStatus('◉ Click CAM in topbar to enable webcam'), 1100);
+        }
+      });
+      grid.appendChild(cell);
+    });
+    body.appendChild(grid);
+  } else if (state.activeTab === 'effects') {
+    const grid = document.createElement('div');
+    grid.className = 'effects-grid';
+    EFFECTS.forEach(([n, c]) => {
+      const e = document.createElement('div');
+      e.className = 'eff-item';
+      e.innerHTML = `<span>${n}</span><span class="eff-cat">${c}</span>`;
+      e.addEventListener('click', () => flashStatus(`Effect "${n}" — drag to layer (demo only)`));
+      grid.appendChild(e);
+    });
+    body.appendChild(grid);
+  } else if (state.activeTab === 'transitions') {
+    const grid = document.createElement('div');
+    grid.className = 'effects-grid';
+    TRANSITIONS.forEach((n, i) => {
+      const e = document.createElement('div');
+      e.className = 'eff-item';
+      if (i === state.transition) e.style.borderColor = 'var(--red)';
+      e.innerHTML = `<span>${n}</span><span class="eff-cat">TRANSITION</span>`;
+      e.addEventListener('click', () => {
+        state.transition = i;
+        $('trans-name').textContent = n;
+        $('trans-name-mon').textContent = n;
+        document.querySelectorAll('#trans-grid .trans').forEach((b,bi) => {
+          b.classList.toggle('on', bi === i);
+        });
+        buildBrowser();
+      });
+      grid.appendChild(e);
+    });
+    body.appendChild(grid);
+  } else if (state.activeTab === 'playlist') {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display: flex; flex-direction: column; gap: 10px;';
+
+    // Top row: action buttons + summary
+    const top = document.createElement('div');
+    top.style.cssText = 'display: flex; align-items: center; gap: 10px; flex-wrap: wrap;';
+    const list = webcam.playlist || [];
+    const totalMB = list.reduce((s, x) => s + x.size, 0) / 1024 / 1024;
+
+    const loadBtn = document.createElement('button');
+    loadBtn.className = 'btab on';
+    loadBtn.style.cssText = 'border-left: none; padding: 8px 14px; cursor: pointer; background: var(--red); color: #fff; letter-spacing: 1.5px;';
+    loadBtn.textContent = '＋ LOAD VIDEOS';
+    loadBtn.title = 'Pick multiple video files (under 20MB each)';
+    loadBtn.addEventListener('click', () => {
+      const input = $('video-file-input');
+      input.value = '';
+      input.click();
+    });
+    top.appendChild(loadBtn);
+
+    if (list.length >= 2) {
+      const prevBtn = document.createElement('button');
+      prevBtn.className = 'btab';
+      prevBtn.style.cssText = 'border-left: none; padding: 8px 14px; cursor: pointer;';
+      prevBtn.textContent = '⏮ PREV';
+      prevBtn.addEventListener('click', playlistPrev);
+      top.appendChild(prevBtn);
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'btab';
+      nextBtn.style.cssText = 'border-left: none; padding: 8px 14px; cursor: pointer;';
+      nextBtn.textContent = 'NEXT ⏭';
+      nextBtn.addEventListener('click', playlistNext);
+      top.appendChild(nextBtn);
+
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'btab';
+      clearBtn.style.cssText = 'border-left: none; padding: 8px 14px; cursor: pointer; color: var(--cream-dim);';
+      clearBtn.textContent = '× CLEAR';
+      clearBtn.addEventListener('click', () => {
+        stopVideoSource();
+        $('video-src').value = 'off';
+        buildBrowser();
+      });
+      top.appendChild(clearBtn);
+    }
+
+    const summary = document.createElement('div');
+    summary.style.cssText = 'margin-left: auto; font-size: 10px; color: var(--cream-dim); letter-spacing: 1.5px;';
+    if (list.length) {
+      summary.innerHTML = `<span style="color: var(--gold);">${list.length}</span> CLIPS · ${totalMB.toFixed(1)} MB · <span style="color: var(--gold);">${(webcam.playlistIdx + 1)}</span>/${list.length} PLAYING`;
+    } else {
+      summary.innerHTML = `<span style="color: var(--gold);">20MB</span> MAX PER CLIP · MP4 / WEBM / MOV`;
+    }
+    top.appendChild(summary);
+    wrap.appendChild(top);
+
+    // Empty state
+    if (!list.length) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'padding: 30px 20px; text-align: center; color: var(--muted); border: 1px dashed var(--line-2); margin-top: 6px;';
+      empty.innerHTML = `
+        <div style="font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--cream-dim); margin-bottom: 8px; letter-spacing: 1px;">
+          <em style="color: var(--red); font-style: italic;">No playlist</em> loaded
+        </div>
+        <div style="font-size: 10px; letter-spacing: 1.5px; line-height: 1.8;">
+          CLICK <span style="color: var(--red); font-weight: 700;">＋ LOAD VIDEOS</span> ABOVE,
+          USE THE TOPBAR <span style="color: var(--red); font-weight: 700;">▤ FILES</span> BUTTON,
+          OR DRAG &amp; DROP CLIPS HERE<br/>
+          ONLY FILES UNDER 20MB ARE KEPT · PLAYLIST AUTO-ADVANCES &amp; LOOPS
+        </div>
+      `;
+      wrap.appendChild(empty);
+    } else {
+      // Playlist grid
+      const grid = document.createElement('div');
+      grid.className = 'playlist-list';
+      list.forEach((item, i) => {
+        const el = document.createElement('div');
+        el.className = 'playlist-item' + (i === webcam.playlistIdx ? ' on' : '');
+        const sizeMB = (item.size / 1024 / 1024).toFixed(1);
+        const niceName = item.name.length > 18 ? item.name.slice(0, 16) + '…' : item.name;
+        const isPlaying = i === webcam.playlistIdx;
+        el.innerHTML = `
+          <div class="playlist-thumb" style="display:grid;place-items:center;color:${isPlaying ? 'var(--red)' : 'var(--muted)'};font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;">
+            ${isPlaying ? '▶' : (i + 1)}
+          </div>
+          <div class="playlist-meta">
+            <span class="playlist-name" title="${item.name}">${niceName}</span>
+            <span class="playlist-time">${sizeMB} MB</span>
+          </div>
+        `;
+        el.addEventListener('click', () => {
+          playPlaylistItem(i).catch(err => flashStatus('Jump failed: ' + err.message));
+        });
+        grid.appendChild(el);
+      });
+      wrap.appendChild(grid);
+    }
+
+    body.appendChild(wrap);
+  }
+}
+
+// =============================================================
+// TRANSITIONS — composite scene A + B at xfader x to outCanvas
+// =============================================================
+function applyTransition(outCtx, A, B, x, transIdx, t) {
+  const W = outCtx.canvas.width, H = outCtx.canvas.height;
+  outCtx.globalAlpha = 1;
+  outCtx.globalCompositeOperation = 'source-over';
+  outCtx.fillStyle = '#000';
+  outCtx.fillRect(0, 0, W, H);
+
+  const tName = TRANSITIONS[transIdx];
+
+  switch (tName) {
+    case 'DISSOLVE': {
+      outCtx.globalAlpha = 1 - x;
+      outCtx.drawImage(A, 0, 0, W, H);
+      outCtx.globalAlpha = x;
+      outCtx.drawImage(B, 0, 0, W, H);
+      break;
+    }
+    case 'WIPE': {
+      outCtx.drawImage(A, 0, 0, W, H);
+      const cut = Math.floor(W * x);
+      if (cut > 0) outCtx.drawImage(B, 0, 0, cut, H, 0, 0, cut, H);
+      // edge line
+      outCtx.fillStyle = '#e60e00';
+      outCtx.fillRect(cut - 2, 0, 2, H);
+      break;
+    }
+    case 'PUSH': {
+      const off = W * x;
+      outCtx.drawImage(A, -off, 0, W, H);
+      outCtx.drawImage(B, W - off, 0, W, H);
+      break;
+    }
+    case 'SLICE': {
+      outCtx.drawImage(A, 0, 0, W, H);
+      const slices = 12;
+      const sh = H / slices;
+      for (let i = 0; i < slices; i++) {
+        const localX = Math.max(0, Math.min(1, (x - 0) * 2 - (i % 2) * 0.3));
+        const w = W * localX;
+        if (w > 0) {
+          if (i % 2 === 0) outCtx.drawImage(B, 0, i*sh, w, sh, 0, i*sh, w, sh);
+          else outCtx.drawImage(B, W-w, i*sh, w, sh, W-w, i*sh, w, sh);
+        }
+      }
+      break;
+    }
+    case 'PIXEL': {
+      outCtx.drawImage(A, 0, 0, W, H);
+      const cells = Math.max(2, Math.floor(40 - x * 38));
+      const cw = W/cells, ch = H/cells;
+      // sample colors via tiny canvas
+      // (cheap: just chunk and threshold by xfader)
+      const showB = x;
+      outCtx.globalAlpha = showB;
+      outCtx.imageSmoothingEnabled = false;
+      // shrink B and re-blow up
+      const tmp = document.createElement('canvas');
+      tmp.width = cells; tmp.height = cells;
+      const tctx = tmp.getContext('2d');
+      tctx.imageSmoothingEnabled = false;
+      tctx.drawImage(B, 0, 0, cells, cells);
+      outCtx.drawImage(tmp, 0, 0, W, H);
+      outCtx.imageSmoothingEnabled = true;
+      outCtx.globalAlpha = 1;
+      break;
+    }
+    case 'MELT': {
+      outCtx.drawImage(A, 0, 0, W, H);
+      const slices = 24;
+      const sw = W/slices;
+      for (let i = 0; i < slices; i++) {
+        const phase = (i*0.13 + Math.sin(i*0.5)*0.2);
+        const localY = Math.max(0, Math.min(1, x*1.5 - phase));
+        const dropPx = localY * H;
+        if (dropPx > 0) {
+          outCtx.drawImage(B, i*sw, 0, sw, dropPx, i*sw, 0, sw, dropPx);
+        }
+      }
+      break;
+    }
+    case 'WARP': {
+      // draw A normally, then B with radial mask emanating from center
+      outCtx.drawImage(A, 0, 0, W, H);
+      outCtx.save();
+      outCtx.beginPath();
+      outCtx.arc(W/2, H/2, Math.max(W,H) * x * 0.75, 0, Math.PI*2);
+      outCtx.clip();
+      outCtx.drawImage(B, 0, 0, W, H);
+      outCtx.restore();
+      break;
+    }
+    case 'CHECK': {
+      outCtx.drawImage(A, 0, 0, W, H);
+      const cells = 8;
+      const cw = W/cells, ch = H/cells;
+      for (let y = 0; y < cells; y++) {
+        for (let cx = 0; cx < cells; cx++) {
+          const seq = ((y + cx) % 2 === 0) ? (cx + y) / (cells*2) : 0.4 + (cx + y) / (cells*2);
+          if (x > seq) {
+            outCtx.drawImage(B, cx*cw, y*ch, cw, ch, cx*cw, y*ch, cw, ch);
+          }
+        }
+      }
+      break;
+    }
+    case 'IRIS': {
+      outCtx.drawImage(A, 0, 0, W, H);
+      outCtx.save();
+      // diamond iris
+      outCtx.beginPath();
+      const r = Math.max(W,H) * x * 0.85;
+      outCtx.moveTo(W/2, H/2 - r);
+      outCtx.lineTo(W/2 + r, H/2);
+      outCtx.lineTo(W/2, H/2 + r);
+      outCtx.lineTo(W/2 - r, H/2);
+      outCtx.closePath();
+      outCtx.clip();
+      outCtx.drawImage(B, 0, 0, W, H);
+      outCtx.restore();
+      break;
+    }
+    case 'BAND': {
+      // horizontal bands alternating reveal
+      outCtx.drawImage(A, 0, 0, W, H);
+      const bands = 10;
+      const bh = H/bands;
+      for (let i = 0; i < bands; i++) {
+        const localX = Math.max(0, Math.min(1, (x*2) - i*0.05));
+        const w = W * localX;
+        if (w > 0) {
+          if (i % 2 === 0) outCtx.drawImage(B, 0, i*bh, w, bh, 0, i*bh, w, bh);
+          else outCtx.drawImage(B, W-w, i*bh, w, bh, W-w, i*bh, w, bh);
+        }
+      }
+      break;
+    }
+    case 'CRUSH': {
+      // squash A to vertical line, expand B from line
+      const aH = (1 - x) * H;
+      const bH = x * H;
+      if (aH > 0) outCtx.drawImage(A, 0, 0, W, H, 0, (H-aH)/2, W, aH);
+      if (bH > 0) {
+        outCtx.globalCompositeOperation = 'lighter';
+        outCtx.drawImage(B, 0, 0, W, H, 0, (H-bH)/2, W, bH);
+        outCtx.globalCompositeOperation = 'source-over';
+      }
+      break;
+    }
+    case 'INVERT': {
+      // dissolve while inverting at midpoint
+      outCtx.globalAlpha = 1 - x;
+      outCtx.drawImage(A, 0, 0, W, H);
+      outCtx.globalAlpha = x;
+      outCtx.globalCompositeOperation = x > 0.5 ? 'difference' : 'source-over';
+      outCtx.drawImage(B, 0, 0, W, H);
+      outCtx.globalCompositeOperation = 'source-over';
+      outCtx.globalAlpha = 1;
+      break;
+    }
+  }
+}
+
+// =============================================================
+// COMP FX (CSS filters + canvas ops)
+// =============================================================
+function applyOutputFilter() {
+  const filters = [];
+  if (state.fxActive.has('invert')) filters.push('invert(1)');
+  if (state.fxActive.has('bw'))     filters.push('grayscale(1) contrast(1.2)');
+  if (state.fxActive.has('hue'))    filters.push('hue-rotate(var(--hue,0deg))');
+  if (state.fxActive.has('vhs'))    filters.push('sepia(0.55) hue-rotate(-15deg) saturate(1.3) contrast(1.2)');
+  if (state.fxActive.has('bloom'))  filters.push('brightness(1.3) saturate(1.4) blur(0.5px)');
+  if (state.fxActive.has('scan'))   filters.push('contrast(1.4) saturate(1.5)');
+  outputCanvas.style.filter = filters.join(' ');
+  $('active-fx-count').textContent = state.fxActive.size + ' active';
+}
+
+// =============================================================
+// MAIN LOOP
+// =============================================================
+let frameCount = 0;
+let fpsTime = performance.now();
+let layerThumbCounter = 0;
+let sourceThumbCounter = 0;
+
+// =============================================================
+// OUTPUT WINDOWING — fullscreen + popup-to-projector
+// =============================================================
+function toggleFullscreen() {
+  const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+  if (fsEl) {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    return;
+  }
+  const target = $('output-monitor');
+  const req = target.requestFullscreen || target.webkitRequestFullscreen;
+  if (!req) {
+    flashStatus('Fullscreen API not supported in this browser');
+    return;
+  }
+  req.call(target).then(() => {
+    flashStatus('Fullscreen · press ESC to exit');
+  }).catch(err => {
+    flashStatus('Fullscreen failed: ' + err.message);
+  });
+}
+
+function openOutputPopup() {
+  // If already open, focus and bail
+  if (state.outputWindow && !state.outputWindow.closed) {
+    state.outputWindow.focus();
+    return;
+  }
+
+  const popup = window.open('', 'nuvotion-output',
+    'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no,resizable=yes');
+
+  if (!popup) {
+    flashStatus('Popup blocked — allow popups in your browser');
+    return;
+  }
+
+  // Capture the live program output as a MediaStream
+  let stream;
+  try {
+    stream = outputCanvas.captureStream(60);
+  } catch (err) {
+    popup.close();
+    flashStatus('captureStream failed: ' + err.message);
+    return;
+  }
+
+  // Build the popup document
+  popup.document.open();
+  popup.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Nuvotion · Live Output</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #000;
+      overflow: hidden;
+      cursor: none;
+    }
+    body {
+      display: flex; align-items: center; justify-content: center;
+    }
+    video {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      background: #000;
+      display: block;
+    }
+    .hint {
+      position: fixed;
+      bottom: 18px; left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.5);
+      font: 11px/1 'JetBrains Mono', monospace;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      transition: opacity 0.6s;
+      pointer-events: none;
+      padding: 6px 14px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(0,0,0,0.4);
+    }
+    .hint.hide { opacity: 0; }
+    .err {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: #e60e00;
+      font: 14px monospace;
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+  <video autoplay muted playsinline></video>
+  <div class="hint" id="hint">F · FULLSCREEN &nbsp;·&nbsp; ESC · CLOSE</div>
+  <script>
+    const hint = document.getElementById('hint');
+    const video = document.querySelector('video');
+    let hintTimer = setTimeout(() => hint.classList.add('hide'), 4000);
+    function showHint() {
+      hint.classList.remove('hide');
+      document.body.style.cursor = 'default';
+      clearTimeout(hintTimer);
+      hintTimer = setTimeout(() => {
+        hint.classList.add('hide');
+        document.body.style.cursor = 'none';
+      }, 2500);
+    }
+    document.addEventListener('mousemove', showHint);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'f' || e.key === 'F') {
+        if (document.fullscreenElement) document.exitFullscreen();
+        else document.documentElement.requestFullscreen().catch(()=>{});
+      } else if (e.key === 'Escape') {
+        if (!document.fullscreenElement) window.close();
+      }
+    });
+    // double-click also toggles fullscreen
+    video.addEventListener('dblclick', () => {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen().catch(()=>{});
+    });
+  <\/script>
+</body>
+</html>`);
+  popup.document.close();
+
+  // Attach the stream — synchronous after document.close
+  const video = popup.document.querySelector('video');
+  if (video) {
+    video.srcObject = stream;
+    video.play().catch(() => {});
+  } else {
+    // fallback for browsers that haven't parsed yet
+    setTimeout(() => {
+      const v = popup.document.querySelector('video');
+      if (v) { v.srcObject = stream; v.play().catch(()=>{}); }
+    }, 100);
+  }
+
+  state.outputWindow = popup;
+  $('popup-btn').classList.add('on');
+  flashStatus('Output window open · drag to projector then press F');
+
+  // Watch for the user closing it manually
+  if (state.outputCheckTimer) clearInterval(state.outputCheckTimer);
+  state.outputCheckTimer = setInterval(() => {
+    if (!state.outputWindow || state.outputWindow.closed) {
+      $('popup-btn').classList.remove('on');
+      state.outputWindow = null;
+      clearInterval(state.outputCheckTimer);
+      state.outputCheckTimer = null;
+    }
+  }, 600);
+}
+
+function closeOutputPopup() {
+  if (state.outputWindow && !state.outputWindow.closed) {
+    try { state.outputWindow.close(); } catch (e) {}
+  }
+  state.outputWindow = null;
+  $('popup-btn').classList.remove('on');
+  if (state.outputCheckTimer) {
+    clearInterval(state.outputCheckTimer);
+    state.outputCheckTimer = null;
+  }
+}
+
+// =============================================================
+// RECORDING — capture the program output to a downloadable WebM
+// =============================================================
+// Picks the best WebM codec the browser supports
+function pickRecorderMime() {
+  const candidates = [
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8,opus',
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm',
+    'video/mp4'   // Safari fallback (only some versions)
+  ];
+  if (typeof MediaRecorder === 'undefined') return null;
+  for (const m of candidates) {
+    try { if (MediaRecorder.isTypeSupported(m)) return m; } catch (e) {}
+  }
+  return '';   // empty string = let the browser pick
+}
+
+function startRecording() {
+  if (state.recorder) return;
+  if (typeof MediaRecorder === 'undefined') {
+    flashStatus('Recording not supported in this browser');
+    return;
+  }
+
+  try {
+    // Video track: live capture of the output canvas
+    const videoStream = outputCanvas.captureStream(30);
+    if (!videoStream.getVideoTracks().length) {
+      throw new Error('captureStream produced no video track');
+    }
+    const tracks = [...videoStream.getVideoTracks()];
+
+    // Audio track: include mic/system audio if a real input is active
+    let audioSource = 'none';
+    if (state.mediaStream) {
+      const audioTracks = state.mediaStream.getAudioTracks();
+      if (audioTracks.length) {
+        tracks.push(audioTracks[0]);
+        audioSource = state.audioMode;
+      }
+    }
+
+    const stream = new MediaStream(tracks);
+    const mime = pickRecorderMime();
+    const opts = { videoBitsPerSecond: 6_000_000 };
+    if (mime) opts.mimeType = mime;
+
+    const mr = new MediaRecorder(stream, opts);
+    const chunks = [];
+
+    mr.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) chunks.push(e.data);
+    };
+
+    mr.onstop = () => {
+      const blob = new Blob(chunks, { type: mime || 'video/webm' });
+      const ext = (mime && mime.startsWith('video/mp4')) ? 'mp4' : 'webm';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      a.download = `nuvotion-${stamp}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 4000);
+
+      const sizeMB = (blob.size / 1024 / 1024).toFixed(1);
+      flashStatus(`Saved ${a.download} · ${sizeMB} MB`);
+
+      // Clear recorder state ONLY after the stop event completes
+      state.recorder = null;
+      state.recording = false;
+      $('rec-btn').classList.remove('on');
+      $('rec-label').textContent = 'REC';
+    };
+
+    mr.onerror = (e) => {
+      console.error('Recorder error:', e);
+      flashStatus('Recorder error: ' + (e.error?.message || 'unknown'));
+      state.recorder = null;
+      state.recording = false;
+      $('rec-btn').classList.remove('on');
+      $('rec-label').textContent = 'REC';
+    };
+
+    // Store the recorder BEFORE starting it
+    state.recorder = {
+      mr,
+      chunks,
+      startTime: performance.now(),
+      mime: mime || 'video/webm',
+      audioSource
+    };
+
+    // Start with 1-second chunks
+    mr.start(1000);
+
+    state.recording = true;
+    $('rec-btn').classList.add('on');
+    $('rec-label').textContent = '0:00';
+
+    const audioMsg = audioSource === 'none' ? 'video only' : `with ${audioSource} audio`;
+    flashStatus(`Recording started (${audioMsg}) · click REC to stop`);
+  } catch (err) {
+    console.error('Recording start failed:', err);
+    flashStatus('Recording failed: ' + err.message);
+    state.recorder = null;
+    state.recording = false;
+    $('rec-btn').classList.remove('on');
+    $('rec-label').textContent = 'REC';
+  }
+}
+
+function stopRecording() {
+  if (!state.recorder) return;
+  try {
+    if (state.recorder.mr.state !== 'inactive') {
+      state.recorder.mr.stop();   // → triggers onstop, which downloads
+    } else {
+      // If it's already inactive, clear state manually
+      state.recorder = null;
+      state.recording = false;
+      $('rec-btn').classList.remove('on');
+      $('rec-label').textContent = 'REC';
+    }
+  } catch (err) {
+    console.error('Recording stop failed:', err);
+    flashStatus('Stop failed: ' + err.message);
+    state.recorder = null;
+    state.recording = false;
+    $('rec-btn').classList.remove('on');
+    $('rec-label').textContent = 'REC';
+  }
+}
+
+function toggleRecording() {
+  if (state.recorder) stopRecording();
+  else startRecording();
+}
+
+// =============================================================
+// REAL-TIME AUDIO INPUT (mic or system tab)
+// =============================================================
+async function initAudioInput(mode) {
+  // Tear down any existing mic/system stream
+  stopAudioInput();
+
+  if (mode === 'simulated') {
+    state.audioMode = 'simulated';
+    $('mic-indicator').classList.remove('show');
+    $('tempo-auto').classList.remove('show');
+    flashStatus('Audio: simulated');
+    return;
+  }
+
+  try {
+    let stream;
+    if (mode === 'mic') {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('getUserMedia not supported in this browser');
+      }
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          // Disable browser DSP that would smear out beats
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        }
+      });
+    } else if (mode === 'system') {
+      if (!navigator.mediaDevices?.getDisplayMedia) {
+        throw new Error('getDisplayMedia not supported');
+      }
+      // Chrome requires video:true even for tab-audio capture, and the user
+      // must tick "Share tab audio" in the picker
+      stream = await navigator.mediaDevices.getDisplayMedia({
+        audio: true,
+        video: { width: 1, height: 1, frameRate: 1 }
+      });
+      if (stream.getAudioTracks().length === 0) {
+        stream.getTracks().forEach(t => t.stop());
+        throw new Error('No tab audio. Re-pick & enable "Share tab audio".');
+      }
+      // Discard video — we only want audio
+      stream.getVideoTracks().forEach(t => t.stop());
+    }
+
+    state.mediaStream = stream;
+    state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (state.audioCtx.state === 'suspended') await state.audioCtx.resume();
+
+    const src = state.audioCtx.createMediaStreamSource(stream);
+    state.analyser = state.audioCtx.createAnalyser();
+    state.analyser.fftSize = 1024;             // 512 bins
+    state.analyser.smoothingTimeConstant = 0.55;
+    src.connect(state.analyser);
+
+    state.freqData = new Uint8Array(state.analyser.frequencyBinCount);
+    state.audioMode = mode;
+    state.bassEnergyHist = [];
+    state.beatHistory = [];
+    state.audioPeaks = { bass: 0.15, mid: 0.15, treble: 0.15 };
+
+    // Auto-stop if user revokes permission / closes share
+    stream.getAudioTracks()[0].addEventListener('ended', () => {
+      flashStatus('Audio source ended');
+      $('audio-src').value = 'simulated';
+      initAudioInput('simulated');
+    });
+
+    $('mic-indicator').classList.add('show');
+    flashStatus(mode === 'mic' ? 'Microphone live · play some music' : 'Tab audio live');
+  } catch (err) {
+    console.error('Audio init failed:', err);
+    flashStatus(`Audio failed: ${err.message}`);
+    state.audioMode = 'simulated';
+    $('audio-src').value = 'simulated';
+    $('mic-indicator').classList.remove('show');
+    $('tempo-auto').classList.remove('show');
+  }
+}
+
+function stopAudioInput() {
+  if (state.mediaStream) {
+    state.mediaStream.getTracks().forEach(t => t.stop());
+    state.mediaStream = null;
+  }
+  if (state.audioCtx) {
+    state.audioCtx.close().catch(() => {});
+    state.audioCtx = null;
+  }
+  state.analyser = null;
+  state.freqData = null;
+}
+
+// Read FFT, fill state.audio.{bass,mid,treble,beat}, detect beats
+function analyzeRealAudio(now) {
+  if (!state.analyser || !state.freqData) return false;
+
+  state.analyser.getByteFrequencyData(state.freqData);
+
+  const bins = state.freqData.length;
+  const sampleRate = state.audioCtx.sampleRate;
+  const hzPerBin = (sampleRate / 2) / bins;
+
+  // Frequency band edges in bin indices
+  const bassMin = Math.max(1, Math.floor(20 / hzPerBin));
+  const bassMax = Math.floor(180 / hzPerBin);
+  const midMax  = Math.floor(2000 / hzPerBin);
+  const trebMax = Math.floor(8000 / hzPerBin);
+
+  let bassSum = 0, midSum = 0, trebSum = 0;
+  let bassCnt = 0, midCnt = 0, trebCnt = 0;
+
+  for (let i = bassMin; i <= bassMax && i < bins; i++) { bassSum += state.freqData[i]; bassCnt++; }
+  for (let i = bassMax + 1; i <= midMax && i < bins; i++) { midSum += state.freqData[i]; midCnt++; }
+  for (let i = midMax + 1; i <= trebMax && i < bins; i++) { trebSum += state.freqData[i]; trebCnt++; }
+
+  const rawBass = bassCnt ? (bassSum / bassCnt) / 255 : 0;
+  const rawMid  = midCnt  ? (midSum  / midCnt)  / 255 : 0;
+  const rawTreb = trebCnt ? (trebSum / trebCnt) / 255 : 0;
+
+  // Auto-gain: track running peak with slow decay so quiet input still drives visuals
+  state.audioPeaks.bass   = Math.max(state.audioPeaks.bass   * 0.9985, rawBass);
+  state.audioPeaks.mid    = Math.max(state.audioPeaks.mid    * 0.9985, rawMid);
+  state.audioPeaks.treble = Math.max(state.audioPeaks.treble * 0.9985, rawTreb);
+
+  const FLOOR = 0.08;  // don't divide by tiny numbers
+  state.audio.bass   = Math.min(1, rawBass / Math.max(FLOOR, state.audioPeaks.bass));
+  state.audio.mid    = Math.min(1, rawMid  / Math.max(FLOOR, state.audioPeaks.mid));
+  state.audio.treble = Math.min(1, rawTreb / Math.max(FLOOR, state.audioPeaks.treble));
+
+  // Beat detection: bass spike vs running average
+  state.bassEnergyHist.push(rawBass);
+  if (state.bassEnergyHist.length > 43) state.bassEnergyHist.shift();  // ~0.7s history
+  let avg = 0;
+  for (const v of state.bassEnergyHist) avg += v;
+  avg /= state.bassEnergyHist.length;
+
+  const THRESHOLD = 1.35;
+  const MIN_INTERVAL = 250;  // ms — caps at 240 BPM
+  if (rawBass > avg * THRESHOLD && rawBass > 0.12 && (now - state.beatLast) > MIN_INTERVAL) {
+    state.beatLast = now;
+    state.beatHistory.push(now);
+    if (state.beatHistory.length > 8) state.beatHistory.shift();
+
+    // Re-estimate BPM once we have enough beats
+    if (state.beatHistory.length >= 4) {
+      const intervals = [];
+      for (let i = 1; i < state.beatHistory.length; i++) {
+        intervals.push(state.beatHistory[i] - state.beatHistory[i - 1]);
+      }
+      // Reject outliers via median filter
+      const sorted = [...intervals].sort((a, b) => a - b);
+      const median = sorted[Math.floor(sorted.length / 2)];
+      const valid = intervals.filter(iv => Math.abs(iv - median) < median * 0.35);
+      if (valid.length >= 3) {
+        const meanIv = valid.reduce((a, b) => a + b, 0) / valid.length;
+        const detected = 60000 / meanIv;
+        if (detected >= 60 && detected <= 200) {
+          // Smooth toward detected BPM
+          state.bpm = state.bpm * 0.8 + detected * 0.2;
+          $('tempo').textContent = state.bpm.toFixed(1);
+          $('tempo-auto').classList.add('show');
+        }
+      }
+    }
+  }
+
+  // Beat envelope decay (peaks at beat, falls off over ~250ms)
+  const dt = now - state.beatLast;
+  state.audio.beat = Math.max(0, 1 - dt / 220);
+
+  return true;
+}
+
+function updateAudio(now) {
+  if (state.audioMode !== 'simulated') {
+    // Real audio analysis fills state.audio
+    if (!analyzeRealAudio(now)) {
+      // analyser missing → fall through to simulated
+      runSimulatedAudio(now);
+    }
+  } else {
+    runSimulatedAudio(now);
+  }
+
+  // Update audio meters
+  $('m-bass').style.setProperty('--lvl', (state.audio.bass * 100) + '%');
+  $('m-mid').style.setProperty('--lvl', (state.audio.mid * 100) + '%');
+  $('m-treb').style.setProperty('--lvl', (state.audio.treble * 100) + '%');
+
+  // Beat LED + tempo highlight
+  const showBeat = state.audioMode === 'simulated'
+    ? state.beatPhase < 0.12
+    : state.audio.beat > 0.65;
+  $('beat-led').classList.toggle('on', showBeat);
+  $('tempo').classList.toggle('beat', showBeat);
+}
+
+function runSimulatedAudio(now) {
+  const beatLen = 60000 / state.bpm;
+  const elapsed = now - state.startTime;
+  state.beatPhase = (elapsed % beatLen) / beatLen;
+  const beat = Math.pow(1 - state.beatPhase, 2.5);
+  state.audio.beat = beat;
+  state.audio.bass = Math.max(beat, 0.15 + Math.sin(now * 0.003) * 0.1);
+  state.audio.mid = 0.4 + Math.sin(now * 0.001) * 0.2 +
+                    Math.pow(1 - ((elapsed % (beatLen / 2)) / (beatLen / 2)), 4) * 0.3;
+  state.audio.treble = 0.25 + Math.abs(Math.sin(now * 0.012)) * 0.4 +
+                       Math.pow(1 - ((elapsed % (beatLen / 4)) / (beatLen / 4)), 6) * 0.3;
+  state.audio.bass   = Math.min(1, state.audio.bass);
+  state.audio.mid    = Math.min(1, state.audio.mid);
+  state.audio.treble = Math.min(1, state.audio.treble);
+}
+
+function renderScene(sceneKey, now) {
+  const scene = state.scenes[sceneKey];
+  const ctx = scene.ctx;
+  const W = scene.canvas.width, H = scene.canvas.height;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+
+  scene.layers.forEach((layer, idx) => {
+    const src = SOURCES[layer.source];
+    const lc = layer.ctx;
+    const lW = layer.canvas.width, lH = layer.canvas.height;
+    // give each layer slight time offset for variety
+    const tOff = (sceneKey === 'A' ? 0 : 7000) + idx * 1300;
+    generators[src[0]](lc, now + tOff, lW, lH, state.audio, PALETTES[src[1]]);
+
+    ctx.globalAlpha = layer.opacity;
+    ctx.globalCompositeOperation = layer.blend;
+    ctx.drawImage(layer.canvas, 0, 0, W, H);
+  });
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+function loop(now) {
+  updateAudio(now);
+
+  // Update recording elapsed-time display (cheap; once per frame is fine)
+  if (state.recorder) {
+    const elapsed = (now - state.recorder.startTime) / 1000;
+    const m = Math.floor(elapsed / 60);
+    const s = Math.floor(elapsed % 60).toString().padStart(2, '0');
+    const lbl = $('rec-label');
+    if (lbl && lbl.textContent !== `${m}:${s}`) lbl.textContent = `${m}:${s}`;
+  }
+
+  // Sample webcam once per frame; all blob-tracking layers reuse this
+  if (webcam.ready) sampleWebcamFrame(frameCount);
+
+  // hue-rotate animation if active
+  if (state.fxActive.has('hue')) {
+    outputCanvas.style.setProperty('--hue', ((now*0.05) % 360) + 'deg');
+    outputCanvas.style.filter = outputCanvas.style.filter; // poke
+  }
+
+  // ----- Render scene A and B -----
+  renderScene('A', now);
+  renderScene('B', now);
+
+  // ----- Show scene previews -----
+  ctxA.drawImage(state.scenes.A.canvas, 0, 0, previewA.width, previewA.height);
+  ctxB.drawImage(state.scenes.B.canvas, 0, 0, previewB.width, previewB.height);
+
+  // ----- Composite to output via transition -----
+  applyTransition(outCtx, state.scenes.A.canvas, state.scenes.B.canvas,
+                  state.xfader, state.transition, now);
+
+  // canvas-side comp FX
+  if (state.fxActive.has('mirror')) {
+    const W = outputCanvas.width, H = outputCanvas.height;
+    const tmp = document.createElement('canvas');
+    tmp.width = W; tmp.height = H;
+    tmp.getContext('2d').drawImage(outputCanvas, 0, 0);
+    outCtx.save();
+    outCtx.clearRect(W/2, 0, W/2, H);
+    outCtx.translate(W, 0); outCtx.scale(-1, 1);
+    outCtx.drawImage(tmp, 0, 0, W/2, H, 0, 0, W/2, H);
+    outCtx.restore();
+  }
+  if (state.fxActive.has('kaleido')) {
+    const W = outputCanvas.width, H = outputCanvas.height;
+    const tmp = document.createElement('canvas');
+    tmp.width = W; tmp.height = H;
+    tmp.getContext('2d').drawImage(outputCanvas, 0, 0);
+    outCtx.clearRect(0, 0, W, H);
+    outCtx.save();
+    outCtx.translate(W/2, H/2);
+    for (let s = 0; s < 6; s++) {
+      outCtx.save();
+      outCtx.rotate((s/6) * Math.PI * 2);
+      if (s % 2 === 1) outCtx.scale(-1, 1);
+      outCtx.beginPath();
+      outCtx.moveTo(0,0);
+      outCtx.lineTo(W, -H);
+      outCtx.lineTo(W, H);
+      outCtx.closePath();
+      outCtx.clip();
+      outCtx.drawImage(tmp, -W/2, -H/2);
+      outCtx.restore();
+    }
+    outCtx.restore();
+  }
+  if (state.fxActive.has('strobe') && state.audio.beat > 0.85) {
+    outCtx.fillStyle = '#fff';
+    outCtx.globalAlpha = state.audio.beat;
+    outCtx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+    outCtx.globalAlpha = 1;
+  }
+
+  // ----- Layer thumbnails (every 4 frames) -----
+  if (frameCount % 4 === 0) {
+    document.querySelectorAll('.layer').forEach(li => {
+      const sk = li.dataset.scene;
+      const idx = +li.dataset.idx;
+      const layer = state.scenes[sk]?.layers[idx];
+      if (!layer) return;
+      const cv = li.querySelector('canvas');
+      cv.getContext('2d').drawImage(layer.canvas, 0, 0, cv.width, cv.height);
+    });
+  }
+
+  // ----- Source thumbnails (every 8 frames) -----
+  if (state.activeTab === 'sources' && frameCount % 8 === 0) {
+    document.querySelectorAll('.source canvas').forEach((cv, idx) => {
+      const src = SOURCES[idx];
+      if (!src) return;
+      const cctx = cv.getContext('2d');
+      generators[src[0]](cctx, now + idx*500, cv.width, cv.height, state.audio, PALETTES[src[1]]);
+    });
+  }
+
+  // ----- FPS -----
+  frameCount++;
+  if (now - fpsTime > 500) {
+    const fps = Math.round((frameCount * 1000) / (now - fpsTime));
+    $('status-fps').textContent = fps + ' FPS';
+    $('output-fps').textContent = fps + ' fps';
+    $('status-fps').classList.toggle('fps-good', fps >= 50);
+    frameCount = 0;
+    fpsTime = now;
+  }
+
+  requestAnimationFrame(loop);
+}
+
+// =============================================================
+// CONTROLS
+// =============================================================
+function tap() {
+  const now = performance.now();
+  state.taps.push(now);
+  if (state.taps.length > 6) state.taps.shift();
+  if (state.taps.length >= 2) {
+    const intervals = [];
+    for (let i = 1; i < state.taps.length; i++) {
+      intervals.push(state.taps[i] - state.taps[i-1]);
+    }
+    const valid = intervals.filter(i => i < 2000);
+    if (valid.length) {
+      const avg = valid.reduce((a,b) => a+b, 0) / valid.length;
+      state.bpm = Math.max(40, Math.min(220, 60000 / avg));
+      $('tempo').textContent = state.bpm.toFixed(1);
+    }
+  }
+  $('tap-btn').classList.add('tap');
+  setTimeout(() => $('tap-btn').classList.remove('tap'), 80);
+}
+
+let statusTimer = null;
+function flashStatus(msg) {
+  $('status-msg').innerHTML = `<span class="hi">${msg}</span>`;
+  clearTimeout(statusTimer);
+  statusTimer = setTimeout(() => {
+    $('status-msg').innerHTML = '<span class="hi">drag a source onto a layer</span> · select MIC for real audio · TAP for tempo';
+  }, 1800);
+}
+
+// =============================================================
+// EVENT WIRING
+// =============================================================
+function wireEvents() {
+  $('tap-btn').addEventListener('click', tap);
+
+  // Audio source switcher — wires up the real mic / system tab capture
+  $('audio-src').addEventListener('change', e => {
+    initAudioInput(e.target.value);
+  });
+
+  // Output windowing
+  $('full-btn').addEventListener('click', toggleFullscreen);
+  $('popup-btn').addEventListener('click', () => {
+    if (state.outputWindow && !state.outputWindow.closed) closeOutputPopup();
+    else openOutputPopup();
+  });
+
+  // Video input dropdown — webcam / screen / off only. File mode is
+  // handled separately via the FILES button below to keep the picker
+  // click synchronous with a real user gesture.
+  $('video-src').addEventListener('change', e => {
+    setVideoSource(e.target.value);
+  });
+
+  // FILES button: synchronous click on the hidden <input type=file>.
+  // Doing it this way (instead of inside an async function) guarantees
+  // the click stays within the user-activation gesture chain so the OS
+  // file dialog actually opens in Chrome / Safari / Firefox.
+  $('video-files-btn').addEventListener('click', () => {
+    const input = $('video-file-input');
+    input.value = '';        // allow re-picking the same files
+    input.click();
+  });
+
+  // Permanent change listener on the file input — runs whenever the user
+  // confirms a selection in the OS picker, regardless of how the picker
+  // was opened (button, playlist tab, etc.).
+  $('video-file-input').addEventListener('change', async e => {
+    const files = e.target.files;
+    if (!files || !files.length) return;  // user cancelled
+    try {
+      await loadVideoFiles(files);
+    } catch (err) {
+      flashStatus('Load failed: ' + err.message);
+    }
+  });
+
+  // Drag-and-drop a video file anywhere on the window to load it
+  ['dragenter', 'dragover'].forEach(ev => {
+    window.addEventListener(ev, e => {
+      if (e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files')) {
+        e.preventDefault();
+      }
+    });
+  });
+  window.addEventListener('drop', async e => {
+    if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+    const files = Array.from(e.dataTransfer.files);
+    const hasVideo = files.some(f => f.type.startsWith('video/'));
+    if (!hasVideo) {
+      flashStatus('Drop video files (mp4/webm/mov) — only <20MB used');
+      return;
+    }
+    e.preventDefault();
+    try { await loadVideoFiles(files); }
+    catch (err) { flashStatus('Drop failed: ' + err.message); }
+  });
+
+  // Stop mic / system stream and output popup when page closes
+  window.addEventListener('beforeunload', () => {
+    stopRecording();
+    stopAudioInput();
+    stopVideoSource();
+    closeOutputPopup();
+  });
+
+  $('xfader').addEventListener('input', e => {
+    state.xfader = +e.target.value / 1000;
+    $('xfader-pos').textContent = Math.round(state.xfader * 100) + '%';
+    const labels = $('xfader-labels');
+    labels.classList.toggle('aActive', state.xfader < 0.4);
+    labels.classList.toggle('bActive', state.xfader > 0.6);
+  });
+
+  $('rec-btn').addEventListener('click', toggleRecording);
+
+  $('snap-btn').addEventListener('click', () => {
+    // capture output as image
+    outputCanvas.toBlob(blob => {
+      if (!blob) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'nuvotion-' + Date.now() + '.png';
+      a.click();
+      flashStatus('Snapshot saved');
+    });
+  });
+
+  // fx buttons
+  document.querySelectorAll('#fx-list .fx').forEach(b => {
+    b.addEventListener('click', () => {
+      const fx = b.dataset.fx;
+      if (state.fxActive.has(fx)) state.fxActive.delete(fx);
+      else state.fxActive.add(fx);
+      b.classList.toggle('on', state.fxActive.has(fx));
+      applyOutputFilter();
+    });
+  });
+
+  // browser tabs
+  document.querySelectorAll('.btab').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.btab').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      state.activeTab = b.dataset.tab;
+      buildBrowser();
+    });
+  });
+
+  // add layer buttons
+  document.querySelectorAll('.add-layer').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sk = btn.dataset.scene;
+      // pick a random source not currently used heavily
+      const idx = Math.floor(Math.random() * SOURCES.length);
+      const layer = {
+        source: idx, opacity: 0.7, blend: 'screen',
+        canvas: makeOff(), ctx: null
+      };
+      layer.ctx = layer.canvas.getContext('2d');
+      state.scenes[sk].layers.push(layer);
+      renderLayers(sk);
+      updateSceneMeta();
+      flashStatus(`Added ${SOURCES[idx][2]} → ${sk}`);
+    });
+  });
+
+  // panel head buttons (random / clear)
+  document.querySelectorAll('.scene-panel .pbtn').forEach(b => {
+    b.addEventListener('click', e => {
+      const panel = e.target.closest('.scene-panel');
+      const sk = panel.dataset.scene;
+      const t = b.title;
+      if (t === 'Random') {
+        const sc = state.scenes[sk];
+        sc.layers.forEach(l => {
+          l.source = Math.floor(Math.random() * SOURCES.length);
+        });
+        renderLayers(sk);
+        flashStatus(`Randomized scene ${sk}`);
+      } else if (t === 'Clear') {
+        state.scenes[sk].layers = [];
+        renderLayers(sk);
+        updateSceneMeta();
+        flashStatus(`Cleared scene ${sk}`);
+      } else if (t === 'Save scene') {
+        flashStatus(`Scene ${sk} bookmarked`);
+      }
+    });
+  });
+
+  // keyboard shortcuts
+  window.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    const k = e.key.toLowerCase();
+    if (k === ' ') { e.preventDefault(); tap(); }
+    else if (k === 't') { e.preventDefault(); tap(); }
+    else if (k === 'a') {
+      // crossfader to A
+      $('xfader').value = 0;
+      $('xfader').dispatchEvent(new Event('input'));
+    }
+    else if (k === 'b') {
+      $('xfader').value = 1000;
+      $('xfader').dispatchEvent(new Event('input'));
+    }
+    else if (k === 'r') {
+      $('snap-btn').click();
+    }
+    else if (k === 'f') {
+      e.preventDefault();
+      toggleFullscreen();
+    }
+    else if (k === 'p') {
+      e.preventDefault();
+      $('popup-btn').click();
+    }
+    else if (k === 'c') {
+      e.preventDefault();
+      toggleWebcam();
+    }
+    else if (k === 'n') {
+      e.preventDefault();
+      if (e.shiftKey) playlistPrev();
+      else playlistNext();
+    }
+    else if (k === 'arrowleft') {
+      const cur = +$('xfader').value;
+      $('xfader').value = Math.max(0, cur - 50);
+      $('xfader').dispatchEvent(new Event('input'));
+    }
+    else if (k === 'arrowright') {
+      const cur = +$('xfader').value;
+      $('xfader').value = Math.min(1000, cur + 50);
+      $('xfader').dispatchEvent(new Event('input'));
+    }
+  });
+
+  // resize observer for output crispness
+  const ro = new ResizeObserver(() => {
+    const r = $('output-monitor').getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    outputCanvas.width = Math.floor(r.width * dpr);
+    outputCanvas.height = Math.floor(r.height * dpr);
+    // resize scene canvases to match for 1:1
+    for (const k of ['A','B']) {
+      const sc = state.scenes[k];
+      sc.canvas.width = outputCanvas.width;
+      sc.canvas.height = outputCanvas.height;
+      for (const l of sc.layers) {
+        l.canvas.width = outputCanvas.width;
+        l.canvas.height = outputCanvas.height;
+      }
+    }
+  });
+  ro.observe($('output-monitor'));
+}
+
+// =============================================================
+// BOOT
+// =============================================================
+initCanvases();
+buildTransitions();
+renderLayers('A');
+renderLayers('B');
+updateSceneMeta();
+buildBrowser();
+wireEvents();
+flashStatus('ready · select MICROPHONE in audio source for live reactivity');
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
